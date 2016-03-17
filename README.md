@@ -1,4 +1,4 @@
-DistributedSystems
+Distributed Systems
 ===
 Project for Distributed Systems 2016
 
