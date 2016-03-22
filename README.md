@@ -3,6 +3,8 @@ Distributed Systems
 Project for Distributed Systems 2016
 
 [Εκφώνηση εργασίας](https://eclass.aueb.gr/modules/document/file.php/INF308/Project/project2015-2016.pdf)
+
+
 ![skeleton](https://eclass.aueb.gr/modules/document/file.php/INF308/Project/Skeleton.png)
 
 Στόχος
