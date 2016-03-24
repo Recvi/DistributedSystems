@@ -38,7 +38,7 @@ public class NetworkThread extends Thread{
 	public void run() {
 		try {
 			Object data = in.readObject();
-			boolean allGood=worker.onNewTask(data);
+			boolean allGood=(boolean)worker.onNewTask(data);
 			if (allGood){
 				out.writeObject(successMessage);
 			}else{
