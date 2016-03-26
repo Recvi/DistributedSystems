@@ -9,16 +9,16 @@ public class NetworkListener {
 
     //Number of maximum connections in queue.
     final static int BACKLOG=10;
-    
+
     int port;
     Worker worker;
     ServerSocket listenSocket;
     Socket connection = null;
-    
-    
+
+
     public NetworkListener(int port, Worker worker) {
-        this.port=port;
-        this.worker=worker;
+        this.port = port;
+        this.worker = worker;
     }
 
     /*
@@ -36,6 +36,7 @@ public class NetworkListener {
             }
         } catch (IOException e) {
                 e.printStackTrace();
-        }        
+        }
     }
+
 }

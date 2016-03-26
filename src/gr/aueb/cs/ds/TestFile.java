@@ -3,70 +3,74 @@ package gr.aueb.cs.ds;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Properties;
 import java.io.*;
 import java.net.*;
+
+import gr.aueb.cs.ds.dummy.AndroidClient;
 import gr.aueb.cs.ds.network.Address;
 import gr.aueb.cs.ds.worker.map.MapWorker;
+import gr.aueb.cs.ds.worker.reduce.ReduceWorker;
 
 public class TestFile {
 
-    
-    public static void main(String[] args) {
-        //Einai se new thread epeidi ftiaxnw kai client kai server apo idio instance.
+    static Address mapperAddress1=new Address("localhost",3330);
+    static Address mapperAddress2=new Address("localhost",3331);
+
+    static Address reducerAddress=new Address("localhost",3332);
+
+
+    public static void main(String[] args) throws InterruptedException {
+        makeReducer();
+        Thread.sleep(1000);
+        makeMapper1();
+        Thread.sleep(1000);
+        makeMapper2();
+        Thread.sleep(1000);
+        makeDummy();
+    }
+
+    private static void makeDummy(){
         new Thread()
         {
             public void run() {
-                MapWorker mapwork=new MapWorker(2323,new Address("localhost",5666));
+                ArrayList<Address> mappers = new ArrayList<Address>();
+                mappers.add(mapperAddress1);
+                mappers.add(mapperAddress2);
+                AndroidClient client = new AndroidClient(mappers, reducerAddress);
             }
         }.start();
-        
-        //Kanw read epeidi prepei na perimenw ligo na aniksei o server.
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        System.out.println("Press enter to send request.");
-        try {
-            String s = br.readLine();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        fakeClient();
     }
-    
-    private static void fakeClient(){
-        Socket requestSocket = null;
-        ObjectOutputStream out = null;
-        ObjectInputStream in = null;
-        try {
-            requestSocket = new Socket("localhost", 2323);
-            out = new ObjectOutputStream(requestSocket.getOutputStream());
-            in = new ObjectInputStream(requestSocket.getInputStream());
-            System.out.println("fakeClient:Sending YOLO");
-            out.writeObject("YOLO");
-            out.flush();
 
-            try {
-                System.out.println("fakeClient:I received " + (String)in.readObject());
-            } catch (ClassNotFoundException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+    private static void makeMapper1(){
+        new Thread()
+        {
+            public void run() {
+                MapWorker mapwork = new MapWorker(mapperAddress1.port, reducerAddress);
             }
-    
-        } catch (UnknownHostException unknownHost) {
-            System.err.println("You are trying to connect to an unknown host!");
-        } catch (IOException ioException) {
-            ioException.printStackTrace();
-        } finally {
-            try {
-                in.close();    out.close();
-                requestSocket.close();
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
-            }
-        }
+        }.start();
     }
-    
-    
+
+    private static void makeMapper2(){
+        new Thread()
+        {
+            public void run() {
+                MapWorker mapwork = new MapWorker(mapperAddress2.port, reducerAddress);
+            }
+        }.start();
+    }
+
+    private static void makeReducer(){
+        new Thread()
+        {
+            public void run() {
+                ReduceWorker mapwork = new ReduceWorker(reducerAddress.port);
+            }
+        }.start();
+    }
+
+
     private void testProp(){
         Properties prop = new Properties();
         InputStream input = null;
@@ -83,4 +87,5 @@ public class TestFile {
             System.out.println("Config file not found.");
         }
     }
+
 }
