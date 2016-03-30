@@ -5,8 +5,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Properties;
-import java.io.*;
-import java.net.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+//import com.mysql.jdbc.Statement;
 
 import gr.aueb.cs.ds.dummy.AndroidClient;
 import gr.aueb.cs.ds.network.Address;
@@ -22,13 +26,15 @@ public class TestFile {
 
 
     public static void main(String[] args) throws InterruptedException {
-        makeReducer();
+        /*makeReducer();
         Thread.sleep(1000);
         makeMapper1();
         Thread.sleep(1000);
         makeMapper2();
         Thread.sleep(1000);
         makeDummy();
+        */
+        testDatabase();
     }
 
     private static void makeDummy(){
@@ -87,5 +93,31 @@ public class TestFile {
             System.out.println("Config file not found.");
         }
     }
-
+    
+    private static void testDatabase() {
+        Connection conn = null;
+        String dbClass = "com.mysql.jdbc.Driver";
+        String query = "Select POI_name from checkins limit 10;";
+        
+        try {
+            Class.forName(dbClass);
+            conn = DriverManager.getConnection("jdbc:mysql://83.212.117.76/ds_systems_2016?" +
+                                           "user=omada13&password=omada13db");
+            Statement stm = conn.createStatement();
+            ResultSet rs = stm.executeQuery(query);
+            while (rs.next()) {
+                System.out.println(rs.getString("POI_name"));
+            }
+            conn.close();
+        
+        } catch (SQLException ex) {
+            // handle any errors
+            System.out.println("SQLException: " + ex.getMessage());
+            System.out.println("SQLState: " + ex.getSQLState());
+            System.out.println("VendorError: " + ex.getErrorCode());
+        } catch (ClassNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
 }
