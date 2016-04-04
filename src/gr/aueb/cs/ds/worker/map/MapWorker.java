@@ -4,8 +4,7 @@ import gr.aueb.cs.ds.ConfigReader;
 import gr.aueb.cs.ds.network.Address;
 import gr.aueb.cs.ds.network.Message;
 import gr.aueb.cs.ds.network.Network;
-import gr.aueb.cs.ds.network.NetworkListener;
-import gr.aueb.cs.ds.worker.Worker;
+import gr.aueb.cs.ds.network.Message.MessageType;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -17,6 +16,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -62,12 +62,12 @@ public class MapWorker extends Thread {
     	 * Reading the data in the same order we sent them.
     	 * (could send a Map<"property_name", value> instead to make it readable)
     	 */
-    	ArrayList<String> data = (ArrayList<String>)msg.getData();
+    	ArrayList<String> msgData = (ArrayList<String>)msg.getData();
     	String query = "SELECT POI, POI_name, POI_category, latitude, longitude, time, photos"
     			+ "FROM checkins WHERE "
-    			+ "latitude >= " + data.get(0) + " AND latitude <= " + data.get(2)
-    			+ " AND longitude >= " + data.get(1) + " AND longitude <= " + data.get(3)
-    			+ " AND time >= '" + data.get(4) + "' AND time <= '" + data.get(5)
+    			+ "latitude >= " + msgData.get(0) + " AND latitude <= " + msgData.get(2)
+    			+ " AND longitude >= " + msgData.get(1) + " AND longitude <= " + msgData.get(3)
+    			+ " AND time >= '" + msgData.get(4) + "' AND time <= '" + msgData.get(5)
     			+ "';";
     	/*
     	 * Execute Query
@@ -103,6 +103,27 @@ public class MapWorker extends Thread {
     	}
     	
     	
+    	List<List<Checkin>> results = map(checkins, msgData);
+
+    	
+    	/*
+    	 * Send intermediate data to reducer.
+    	 */ 
+        sendToReducer(results);
+    	
+    	/*
+    	 * Notify client that the work is completed.
+    	 */
+        notifyMaster();
+    	
+    }
+
+    /*
+    * Does the actual mapping.
+    * Right now signature is random,to be fixed by someone who knows map.
+    */
+    private List<List<Checkin>> map(ArrayList<Checkin> checkins, ArrayList<String> msgData) {
+    	
     	/*
     	 * Get the number of working cpu cores.
     	 */
@@ -111,90 +132,52 @@ public class MapWorker extends Thread {
     	/*
     	 * Split data to fit cores.
     	 */
-    	double longitudeMin = Double.parseDouble(data.get(1));
-    	double longitudeMax = Double.parseDouble(data.get(3));
+    	double longitudeMin = Double.parseDouble(msgData.get(1));
+    	double longitudeMax = Double.parseDouble(msgData.get(3));
     	double lonStep = (longitudeMax - longitudeMin) / cores;
     	ConcurrentMap<Object, List<Checkin>> splitCheckins = checkins.parallelStream().collect(Collectors.groupingByConcurrent(
     			c -> Math.ceil((c.getLongitude() - longitudeMin) / lonStep)
     			));
     	
 
+    	
     	/*
     	 * Map in parallel
     	 */
-    	splitCheckins.values().parallelStream().forEach(p -> p.stream().collect(Collectors.groupingBy(c -> c.getPOI(), counting())));
-//    	splitCheckins.values().stream().forEach(p -> p.stream().count());
-    	// Input: ConcurrentMap<Double cpu_group, List<Checkin> checkins>
-    	// Output: Map< Checkin , ArrayList<String>>
-    	
-    	/*
-    	 * Send intermediate data to reducer.
-    	 */
-    	
-    	/*
-    	 * Notify client that the work is completed.
-    	 */
-    	
-    }
-
-
-   
-
-    /*
-    * Is called by network listener when it receives new data.
-    * Parses objects received and does task.
-    * Task will most likely be:getShitFromDatabase(),map(shit),sendToReducers(shit),notifyMaster();
-    * Should most likely break to separate functions.
-    */
-    public Object onNewTask(Object message) {
-
-        System.out.println("Worker " + listeningPort + ":I got:" +((Message) message).data);
-
-        //Get data from database
-        /* ... */
-
-        //Map data
-        /* ... */
-
-        //Send mapped data to reducer
-        String requestId = ((Message) message).clientId;
-        int requestType = 1;
-        String data = "[" + ((Message) message).data + ":Mapped by " + listeningPort + "]";
-        sendToReducers(new Message(requestId, requestType, data));
-
-        //Notify Master that task was completed.
-        return true;
-    }
-
-
-    /*
-    * Does the actual mapping.
-    * Right now signature is random,to be fixed by someone who knows map.
-    */
-    private Map<Integer,Object> map(Object object1, Object object2) {
-        /* ... */
-        return null;
+    	splitCheckins.values().parallelStream().forEach(p -> p.stream().collect(Collectors.groupingBy(c -> c.getPOI(), Collectors.counting())));
+    	List<List<Checkin>> results = splitCheckins.values().parallelStream().collect(  
+    			() -> new ArrayList<>(),  // Supplier
+				(c, e) -> {				// Accumulator
+					Map<String, List<Checkin>> groupedCheckins = e.stream().collect(
+							Collectors.groupingBy( s -> s.getPOI())
+							);
+				 	/*
+			    	 * Get top k results
+			    	 */
+					List<List<Checkin>> res = groupedCheckins.values().stream().sorted(
+							(a1,a2) -> Integer.compare(a1.size(), a2.size())
+							).limit(conf.getK()).collect(Collectors.toList());
+					
+					
+					c.addAll(res);
+				},
+				(c1, c2) -> c1.addAll(c2));  // Combiner
+       
+    	return results;
     }
 
 
     /*
     * Sends the mapped data to $reducerAddress.
-    * Most likely through a new network object or static method.
     * Needs to return boolean for Error Handling.
-    * Parameter should be of type Map<Integer,Object> instead of Object.
     */
-    private void sendToReducer(Object data) {
-        Network.sendRequest(data,reducerAddress);
+    private Object sendToReducer(List<List<Checkin>> results) {
+    	return Network.sendRequest(new Message(msg.getClientId(), MessageType.MAPPER_DATA, results), conf.getReducer());
     }
 
 
-    /*
-    * At current branch this method will not be used.
-    * Master gets notified through a reply to his initial request.
-    */
-    @SuppressWarnings("unused")
-    private void notifyMaster() {
-        
+    private Object notifyMaster() {
+        return Network.sendRequest(new Message(msg.getClientId(), MessageType.ACK, new String("DONE.")), conf.getClient());
     }
 
 }
