@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 //import com.mysql.jdbc.Statement;
 
+
 import gr.aueb.cs.ds.dummy.AndroidClient;
 import gr.aueb.cs.ds.network.Address;
 import gr.aueb.cs.ds.worker.map.MapWorker;
@@ -26,15 +27,18 @@ public class TestFile {
 
 
     public static void main(String[] args) throws InterruptedException {
-        /*makeReducer();
+    	
+    	//ConfigReader conf = new ConfigReader();
+    	
+        makeReducer();
         Thread.sleep(1000);
         makeMapper1();
         Thread.sleep(1000);
         makeMapper2();
         Thread.sleep(1000);
         makeDummy();
-        */
-        testDatabase();
+        
+        //testDatabase();
     }
 
     private static void makeDummy(){

@@ -7,7 +7,9 @@ import java.util.Map;
 
 import gr.aueb.cs.ds.network.Message;
 import gr.aueb.cs.ds.network.NetworkListener;
+import gr.aueb.cs.ds.network.Message.MessageType;
 import gr.aueb.cs.ds.worker.Worker;
+import gr.aueb.cs.ds.worker.map.Checkin;
 
 public class ReduceWorker implements Worker {
 
@@ -20,7 +22,7 @@ public class ReduceWorker implements Worker {
      * the corresponding master asks for them to be reduced.
      * Will use Map<String,ArrayList<String>> for now.
      */
-    Map<String,ArrayList<String>> data = new HashMap<String,ArrayList<String>>(); 
+    Map<String,ArrayList<Object>> data = new HashMap<String, ArrayList<Object>>(); 
 
 
     public ReduceWorker(int listeningPort) {
@@ -64,10 +66,10 @@ public class ReduceWorker implements Worker {
         Message casted = (Message) message;
         System.out.println("Reducer " + listeningPort + ":I got:" +((Message) message).data);
         
-        switch (casted.requestType) {
-            case 1:
+        switch (casted.getMsgType()) {
+            case MAP:
                 return onMappedData(message);
-            case 2:
+            case REDUCE:
                 return onMasterAck(message);
         }
         return null;
@@ -80,10 +82,10 @@ public class ReduceWorker implements Worker {
     * Returns success message.??
     */
     private Object onMappedData(Object data) {
-        if (!this.data.containsKey(((Message)data).requestId)) {
-            this.data.put(((Message)data).requestId,new ArrayList<String>()); 
+        if (!this.data.containsKey(((Message)data).getClientId())) {
+            this.data.put(((Message)data).getClientId(),new ArrayList<Object>()); 
         }
-        ArrayList<String> list=this.data.get(((Message)data).requestId);
+        ArrayList<Object> list=this.data.get(((Message)data).getClientId());
         list.add(((Message)data).data);
         
         return true;
@@ -95,14 +97,14 @@ public class ReduceWorker implements Worker {
      * for an answer.Does the reduce and returns the answer.
      */
     private Object onMasterAck(Object data) {
-        /* ... */
+    	
+    	ArrayList<Object> mappedData=this.data.get(((Message)data).getClientId());
         
-        //Temp
-        return fakeReduce(((Message)data).requestId);
+        return reduce(mappedData);
     }
 
     private synchronized String fakeReduce(String requestId){
-        ArrayList<String> data=this.data.get(requestId);
+        ArrayList<Object> data=this.data.get(requestId);
         String reduced = "[";
         for(int i=0;i<data.size();i++){
             reduced+= data.get(i);
@@ -112,8 +114,9 @@ public class ReduceWorker implements Worker {
         return reduced;
     }
 
-    private void reduce(int dunno, Object what) {
+    private Map<Checkin, ArrayList<String>> reduce(ArrayList<Object> mappedData) {
         /* ... */
+    	return null;
     }
 
     private void getResults(Map<Integer,Object> data) {
