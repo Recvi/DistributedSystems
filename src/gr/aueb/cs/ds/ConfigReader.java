@@ -21,9 +21,11 @@ public class ConfigReader {
 	
 
 	public ConfigReader() {
+		
+		mappers = new ArrayList<Address>();
 		try {
 			Properties prop = new Properties();
-			String propFileName = "config.properties";
+			String propFileName = "gr/aueb/cs/ds/config.properties";
 			
 			InputStream inStream = getClass().getClassLoader().getResourceAsStream(propFileName);
 			

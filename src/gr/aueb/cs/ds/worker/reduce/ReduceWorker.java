@@ -1,18 +1,25 @@
 package gr.aueb.cs.ds.worker.reduce;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import gr.aueb.cs.ds.ConfigReader;
 import gr.aueb.cs.ds.network.Message;
-import gr.aueb.cs.ds.network.NetworkListener;
-import gr.aueb.cs.ds.worker.Worker;
+import gr.aueb.cs.ds.network.Network;
+import gr.aueb.cs.ds.network.Message.MessageType;
+import gr.aueb.cs.ds.worker.map.Checkin;
 
-public class ReduceWorker implements Worker {
+public class ReduceWorker extends Thread{
 
-    private final int listeningPort;
-    private NetworkListener networkListener;
 
     /*
      * Will have an array/stack/hash-map here,
@@ -20,100 +27,63 @@ public class ReduceWorker implements Worker {
      * the corresponding master asks for them to be reduced.
      * Will use Map<String,ArrayList<String>> for now.
      */
-    Map<String,ArrayList<String>> data = new HashMap<String,ArrayList<String>>(); 
+	private ArrayList<ArrayList<Checkin>> data;
+	private Socket con;
+	private Message msg;
+	private ConfigReader conf;
+	private ObjectInputStream in;
+	private ObjectOutputStream out;
 
 
-    public ReduceWorker(int listeningPort) {
-        this.listeningPort = listeningPort;
-        
-        //Initialize & waitForTasksThread should be called @Main
-        initialize();
-        waitForTasksThread();
+    public ReduceWorker(Socket con, Message msg, ConfigReader conf, ArrayList<ArrayList<Checkin>> mapper_data) {
+    	this.con = con;
+    	this.data = mapper_data;
+    	this.msg = msg;
+    	this.conf = conf;
+    	
+    	try {
+			this.out = new ObjectOutputStream(con.getOutputStream());
+			this.in = new ObjectInputStream(con.getInputStream());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    
     }
     
-
-    /*
-     * Creates a new network object that listens on listeningPort,
-     * gives it onNewTask() as "callback" in a java way.
-     */
-    @Override
-    public void initialize() {
-        networkListener = new NetworkListener(listeningPort,this);
+    public void run() {
+    	
+    	Map<Checkin,Set<String>> results = reduce();
+    	
+    	Network.sendRequest(con, new Message(msg.getClientId(), MessageType.ACK, results), conf.getClient());
+    	
     }
+   
 
 
-    /*
-     * Tells the networkListener to start listening for new tasks
-     * and create a new thread for each task it receives. 
-     */
-    @Override
-    public void waitForTasksThread() {
-        networkListener.listen();
-    }
-
-
-    /*
-    * Is called by network listener when it receives new data.
-    * Parses objects received and decides whether it is a
-    * task from a MapWorker or a Master.
-    * Returns onMappedData(data) or onMasterAck(Object data)
-    * respectively. 
-    */
-    @Override
-    public Object onNewTask(Object message) {
-        Message casted = (Message) message;
-        System.out.println("Reducer " + listeningPort + ":I got:" +((Message) message).data);
-        
-        switch (casted.requestType) {
-            case 1:
-                return onMappedData(message);
-            case 2:
-                return onMasterAck(message);
-        }
-        return null;
-    }
-
-
-    /*
-    * Is called by onNewTask when a mapper sends it data.
-    * Stores the data.
-    * Returns success message.??
-    */
-    private Object onMappedData(Object data) {
-        if (!this.data.containsKey(((Message)data).clientId)) {
-            this.data.put(((Message)data).clientId,new ArrayList<String>()); 
-        }
-        ArrayList<String> list=this.data.get(((Message)data).clientId);
-        list.add(((Message)data).data);
-        
-        return true;
-    }
-
-
-    /*
-     * Is called by onNewTask when a Masters asks,
-     * for an answer.Does the reduce and returns the answer.
-     */
-    private Object onMasterAck(Object data) {
-        /* ... */
-        
-        //Temp
-        return fakeReduce(((Message)data).clientId);
-    }
-
-    private synchronized String fakeReduce(String requestId){
-        ArrayList<String> data=this.data.get(requestId);
-        String reduced = "[";
-        for(int i=0;i<data.size();i++){
-            reduced+= data.get(i);
-        }
-        reduced+= ":Reduced by " + listeningPort +"]";
-        this.data.remove(data);
-        return reduced;
-    }
-
-    private void reduce(int dunno, Object what) {
-        /* ... */
+    private Map<Checkin,Set<String>> reduce() {
+    	/*
+    	 * Get global top k
+    	 */
+    	List<List<Checkin>> top_data = data.stream().sorted((a1,a2) -> Integer.compare(a1.size(), a2.size()))
+    	.limit(conf.getK()).collect(Collectors.toList());
+    	
+    	/*
+    	 * Convert from:
+    	 * List<List<Checkin> to Map<Checkin,Set<String>>
+    	 */
+    	Map<Checkin,Set<String>> results = top_data.parallelStream()
+    		.collect(
+    				()-> new HashMap<>(),
+    				(c,e) -> {
+    				 Set<String> photos = e.stream().collect(
+    						 ()-> new HashSet<>(),
+    						 (s,el) -> s.add(el.getPhotos()),
+    						 (s1, s2) -> s1.addAll(s2));
+    				 c.put(e.get(0), photos);	 
+    			 },
+    			 (m1,m2) -> m1.putAll(m2));
+    	
+    	return results;
     }
 
     private void getResults(Map<Integer,Object> data) {

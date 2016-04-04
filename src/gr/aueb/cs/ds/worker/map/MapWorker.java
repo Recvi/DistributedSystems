@@ -49,6 +49,104 @@ public class MapWorker extends Thread {
 
     public void run() {
     	
+    	System.out.println("Mapper: Started.");
+    	
+    	/*
+    	 * Reading the data in the same order we sent them.
+    	 * (could send a Map<"property_name", value> instead to make it readable)
+    	 */
+    	ArrayList<String> msgData = (ArrayList<String>)msg.getData();
+    	
+    	/*
+    	 * Query db and fill checkins data structure.
+    	 */
+    	getDataFromDb(msgData);
+    	
+    	System.out.println("Mapper: Got Data from Db.");
+    	
+    	
+    	List<List<Checkin>> results = map(msgData);
+    	
+
+    	
+    	/*
+    	 * Send intermediate data to reducer.
+    	 */ 
+        sendToReducer(results);
+    	System.out.println("Mapper: Send data to reducer.");
+        
+        
+    	/*
+    	 * Notify client that the work is completed.
+    	 */
+        notifyMaster();
+        System.out.println("Mapper: notified Master.");
+    	
+    }
+
+    /*
+    * Does the actual mapping.
+    * Right now signature is random,to be fixed by someone who knows map.
+    */
+    private List<List<Checkin>> map(ArrayList<String> msgData) {
+    	
+    	/*
+    	 * Get the number of working cpu cores.
+    	 */
+    	int cores = Runtime.getRuntime().availableProcessors();
+    	
+    	/*
+    	 * Split data to fit cores.
+    	 */
+    	double longitudeMin = Double.parseDouble(msgData.get(1));
+    	double longitudeMax = Double.parseDouble(msgData.get(3));
+    	double lonStep = (longitudeMax - longitudeMin) / cores;
+    	ConcurrentMap<Object, List<Checkin>> splitCheckins = checkins.parallelStream().collect(Collectors.groupingByConcurrent(
+    			c -> Math.ceil((c.getLongitude() - longitudeMin) / lonStep)
+    			));
+    	
+
+    	
+    	/*
+    	 * Map in parallel
+    	 */
+    	splitCheckins.values().parallelStream().forEach(p -> p.stream().collect(Collectors.groupingBy(c -> c.getPOI(), Collectors.counting())));
+    	List<List<Checkin>> results = splitCheckins.values().parallelStream().collect(  
+    			() -> new ArrayList<>(),  // Supplier
+				(c, e) -> {				// Accumulator
+					Map<String, List<Checkin>> groupedCheckins = e.stream().collect(
+							Collectors.groupingBy( s -> s.getPOI())
+							);
+				 	/*
+			    	 * Get top k results
+			    	 */
+					List<List<Checkin>> res = groupedCheckins.values().stream().sorted(
+							(a1,a2) -> Integer.compare(a1.size(), a2.size())
+							).limit(conf.getK()).collect(Collectors.toList());
+					
+					
+					c.addAll(res); // add all the Lists to the supplier.
+				},
+				(c1, c2) -> c1.addAll(c2));  // Combiner: merge intermediate results
+       
+    	return results;
+    }
+
+
+    /*
+    * Sends the mapped data to $reducerAddress.
+    * Needs to return boolean for Error Handling.
+    */
+    private Object sendToReducer(List<List<Checkin>> results) {
+    	return Network.sendRequest(con, new Message(msg.getClientId(), MessageType.MAPPER_DATA, results), conf.getReducer());
+    }
+
+
+    private Object notifyMaster() {
+        return Network.sendRequest(con, new Message(msg.getClientId(), MessageType.ACK, new String("DONE.")), conf.getClient());
+    }
+    
+    private void getDataFromDb(ArrayList<String> msgData) {
     	/*
     	 * Connect to db and get the data assigned to me.
     	 */
@@ -58,11 +156,7 @@ public class MapWorker extends Thread {
     			+ conf.getDb_pass();
     	String dbClass = "com.mysql.jdbc.Driver";
     	
-    	/*
-    	 * Reading the data in the same order we sent them.
-    	 * (could send a Map<"property_name", value> instead to make it readable)
-    	 */
-    	ArrayList<String> msgData = (ArrayList<String>)msg.getData();
+    	
     	String query = "SELECT POI, POI_name, POI_category, latitude, longitude, time, photos"
     			+ "FROM checkins WHERE "
     			+ "latitude >= " + msgData.get(0) + " AND latitude <= " + msgData.get(2)
@@ -101,83 +195,6 @@ public class MapWorker extends Thread {
     	} catch (SQLException sql) {
     		sql.printStackTrace();
     	}
-    	
-    	
-    	List<List<Checkin>> results = map(checkins, msgData);
-
-    	
-    	/*
-    	 * Send intermediate data to reducer.
-    	 */ 
-        sendToReducer(results);
-    	
-    	/*
-    	 * Notify client that the work is completed.
-    	 */
-        notifyMaster();
-    	
-    }
-
-    /*
-    * Does the actual mapping.
-    * Right now signature is random,to be fixed by someone who knows map.
-    */
-    private List<List<Checkin>> map(ArrayList<Checkin> checkins, ArrayList<String> msgData) {
-    	
-    	/*
-    	 * Get the number of working cpu cores.
-    	 */
-    	int cores = Runtime.getRuntime().availableProcessors();
-    	
-    	/*
-    	 * Split data to fit cores.
-    	 */
-    	double longitudeMin = Double.parseDouble(msgData.get(1));
-    	double longitudeMax = Double.parseDouble(msgData.get(3));
-    	double lonStep = (longitudeMax - longitudeMin) / cores;
-    	ConcurrentMap<Object, List<Checkin>> splitCheckins = checkins.parallelStream().collect(Collectors.groupingByConcurrent(
-    			c -> Math.ceil((c.getLongitude() - longitudeMin) / lonStep)
-    			));
-    	
-
-    	
-    	/*
-    	 * Map in parallel
-    	 */
-    	splitCheckins.values().parallelStream().forEach(p -> p.stream().collect(Collectors.groupingBy(c -> c.getPOI(), Collectors.counting())));
-    	List<List<Checkin>> results = splitCheckins.values().parallelStream().collect(  
-    			() -> new ArrayList<>(),  // Supplier
-				(c, e) -> {				// Accumulator
-					Map<String, List<Checkin>> groupedCheckins = e.stream().collect(
-							Collectors.groupingBy( s -> s.getPOI())
-							);
-				 	/*
-			    	 * Get top k results
-			    	 */
-					List<List<Checkin>> res = groupedCheckins.values().stream().sorted(
-							(a1,a2) -> Integer.compare(a1.size(), a2.size())
-							).limit(conf.getK()).collect(Collectors.toList());
-					
-					
-					c.addAll(res);
-				},
-				(c1, c2) -> c1.addAll(c2));  // Combiner
-       
-    	return results;
-    }
-
-
-    /*
-    * Sends the mapped data to $reducerAddress.
-    * Needs to return boolean for Error Handling.
-    */
-    private Object sendToReducer(List<List<Checkin>> results) {
-    	return Network.sendRequest(new Message(msg.getClientId(), MessageType.MAPPER_DATA, results), conf.getReducer());
-    }
-
-
-    private Object notifyMaster() {
-        return Network.sendRequest(new Message(msg.getClientId(), MessageType.ACK, new String("DONE.")), conf.getClient());
     }
 
 }

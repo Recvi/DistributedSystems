@@ -12,6 +12,7 @@ import gr.aueb.cs.ds.network.Address;
 import gr.aueb.cs.ds.network.Message;
 import gr.aueb.cs.ds.network.Message.MessageType;
 import gr.aueb.cs.ds.network.Network;
+import gr.aueb.cs.ds.worker.map.Checkin;
 
 public class DummyClient {
 	
@@ -128,9 +129,11 @@ public class DummyClient {
 		Address reducerAddr = conf.getReducer();
 		System.out.println("Notifying Reducer at " + reducerAddr.getIp() + ":" + reducerAddr.getPort());
         Message message = new Message(clientId, MessageType.REDUCE, new String("You can reduce!"));
-        collectDataFromReducer((HashMap<String, ArrayList<String>>) Network.sendRequest(message, conf.getReducer()));
+        collectDataFromReducer((HashMap<Checkin, ArrayList<String>>) Network.sendRequest(message, conf.getReducer()));
     }
 	
-	private void collectDataFromReducer(HashMap<String, ArrayList<String>> data) {
+	private void collectDataFromReducer(HashMap<Checkin, ArrayList<String>> data) {
+		System.out.println("Got data");
+		System.out.println(data);
 	}
 }
