@@ -2,6 +2,7 @@ package gr.aueb.cs.ds.worker;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -41,6 +42,7 @@ public class WorkerSpawner {
 				///////////////////////////////////////
 				System.out.println("Got connection.");
 				//////////////////////////////////////
+				ObjectOutputStream out = new ObjectOutputStream(connection.getOutputStream());
 				ObjectInputStream in = new ObjectInputStream(connection.getInputStream());
 				Message msg = (Message)in.readObject();
 				

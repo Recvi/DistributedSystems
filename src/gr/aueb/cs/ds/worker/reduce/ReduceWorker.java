@@ -64,24 +64,32 @@ public class ReduceWorker extends Thread{
     	/*
     	 * Get global top k
     	 */
-    	List<List<Checkin>> top_data = data.stream().sorted((a1,a2) -> Integer.compare(a1.size(), a2.size()))
+    	List<List<Checkin>> top_data = data.stream().sorted((a1,a2) -> (-1) * Integer.compare(a1.size(), a2.size()))
     	.limit(conf.getK()).collect(Collectors.toList());
     	
     	/*
     	 * Convert from:
-    	 * List<List<Checkin> to Map<Checkin,Set<String>>
+    	 * List<List<Checkin>> to Map<Checkin,Set<String>>
     	 */
     	Map<Checkin,Set<String>> results = top_data.parallelStream()
     		.collect(
-    				()-> new HashMap<>(),
-    				(c,e) -> {
-    				 Set<String> photos = e.stream().collect(
-    						 ()-> new HashSet<>(),
-    						 (s,el) -> s.add(el.getPhotos()),
-    						 (s1, s2) -> s1.addAll(s2));
-    				 c.put(e.get(0), photos);	 
-    			 },
-    			 (m1,m2) -> m1.putAll(m2));
+				()-> new HashMap<>(),
+				(c,e) -> {
+					
+					Checkin checkin = e.get(0);  // get a random Checkin, let's say first one.
+//					e.size(); // Number of Checkins per POI.
+//					TODO: Add Number of Checkins per POI to results.
+					/*
+					 * Add the photos from all the Checkins
+					 * into a Set to remove duplicates.
+					 */
+					Set<String> photos = e.stream().collect(
+							 ()-> new HashSet<>(),
+							 (s,el) -> s.add(el.getPhotos()),
+							 (s1, s2) -> s1.addAll(s2));
+					c.put(checkin, photos);	 
+				},
+				(m1,m2) -> m1.putAll(m2));
     	
     	return results;
     }

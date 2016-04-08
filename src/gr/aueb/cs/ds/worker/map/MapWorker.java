@@ -110,7 +110,6 @@ public class MapWorker extends Thread {
     	/*
     	 * Map in parallel
     	 */
-    	splitCheckins.values().parallelStream().forEach(p -> p.stream().collect(Collectors.groupingBy(c -> c.getPOI(), Collectors.counting())));
     	List<List<Checkin>> results = splitCheckins.values().parallelStream().collect(  
     			() -> new ArrayList<>(),  // Supplier
 				(c, e) -> {				// Accumulator
@@ -121,7 +120,7 @@ public class MapWorker extends Thread {
 			    	 * Get top k results
 			    	 */
 					List<List<Checkin>> res = groupedCheckins.values().stream().sorted(
-							(a1,a2) -> Integer.compare(a1.size(), a2.size())
+							(a1,a2) -> (-1) * Integer.compare(a1.size(), a2.size())  // get reverse order: DESC 
 							).limit(conf.getK()).collect(Collectors.toList());
 					
 					
@@ -157,7 +156,7 @@ public class MapWorker extends Thread {
     	String dbClass = "com.mysql.jdbc.Driver";
     	
     	
-    	String query = "SELECT POI, POI_name, POI_category, latitude, longitude, time, photos"
+    	String query = "SELECT POI, POI_name, POI_category, latitude, longitude, time, photos "
     			+ "FROM checkins WHERE "
     			+ "latitude >= " + msgData.get(0) + " AND latitude <= " + msgData.get(2)
     			+ " AND longitude >= " + msgData.get(1) + " AND longitude <= " + msgData.get(3)
