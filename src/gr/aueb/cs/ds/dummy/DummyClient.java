@@ -1,10 +1,13 @@
 package gr.aueb.cs.ds.dummy;
 
+import java.net.InetAddress;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.UUID;
 
 import gr.aueb.cs.ds.ConfigReader;
@@ -12,6 +15,7 @@ import gr.aueb.cs.ds.network.Address;
 import gr.aueb.cs.ds.network.Message;
 import gr.aueb.cs.ds.network.Message.MessageType;
 import gr.aueb.cs.ds.network.Network;
+import gr.aueb.cs.ds.network.NetworkHandler;
 import gr.aueb.cs.ds.worker.map.Checkin;
 
 public class DummyClient {
@@ -28,6 +32,8 @@ public class DummyClient {
 	private String clientId;
 
 	public DummyClient() {
+		
+		System.out.println("---------- CLIENT ----------");
 		
 		/*
 		 * Reads from config.properties and initializes
@@ -76,6 +82,8 @@ public class DummyClient {
 	    double latDiff = topRightLat - lowerLeftLat;
 	    double latStep = latDiff / mapperAddresses.size();
 	    
+//	    System.out.println("latStep: " + latStep);
+	    
 	    topRightLat = lowerLeftLat + latStep;   // reinitialize for first mapper.
 	    
 	    for (Address addr : mapperAddresses) {
@@ -87,6 +95,8 @@ public class DummyClient {
 	    	data.add(datetimeStart);
 	    	data.add(datetimeEnd);
 	    	
+//	    	System.out.println("MapperData: "+data);
+	    	
 	    	/*
 	    	 * Change values to reflect the next mapper's data.
 	    	 */
@@ -95,6 +105,7 @@ public class DummyClient {
 	    	
 	    	mappersData.put(addr, data);
 	    }
+	    
 
 	    System.out.println("Distributing to mappers with clientId: " + clientId);
 	    
@@ -104,7 +115,11 @@ public class DummyClient {
                 public void run() {
                 	Address mapperAddress = getNextMapperAddress();
                 	Message msg = new Message(clientId, MessageType.MAP, mappersData.get(mapperAddress));
-                	Network.sendRequest(msg, mapperAddress);
+//                	Network.sendRequest(msg, mapperAddress);
+                	NetworkHandler net = new NetworkHandler(mapperAddress);
+                	net.sendMessage(msg);
+                	Message reply = net.readMessage();
+                	net.close();
                 	waitForMappers(mapperAddress);
                 }
             }.start();
@@ -113,13 +128,13 @@ public class DummyClient {
 	
 	private synchronized Address getNextMapperAddress() {
 		Address addr = mapperAddresses.remove(0);
-		System.out.println("Client thread: Sending to " + addr.getIp() + ":" + addr.getPort());
+		System.out.println("\tClient thread: Sending to " + addr.getIp() + ":" + addr.getPort());
 		return addr;
 	}
 	
 	private synchronized void waitForMappers(Address addr) {
 		 pendingRequests--;
-		 System.out.println("Mapper at " + addr.getIp() + ":" + addr.getPort()+ " is done.");
+		 System.out.println("\tClient thread: Mapper at " + addr.getIp() + ":" + addr.getPort()+ " is DONE.");
 	        if (pendingRequests < 1){
 	            ackToReducer();
 	        }
@@ -129,11 +144,17 @@ public class DummyClient {
 		Address reducerAddr = conf.getReducer();
 		System.out.println("Notifying Reducer at " + reducerAddr.getIp() + ":" + reducerAddr.getPort());
         Message message = new Message(clientId, MessageType.REDUCE, new String("You can reduce!"));
-        collectDataFromReducer((HashMap<Checkin, ArrayList<String>>) Network.sendRequest(message, conf.getReducer()));
+        NetworkHandler net = new NetworkHandler(conf.getReducer());
+        net.sendMessage(message);
+        Message reply = net.readMessage();
+        net.close();
+        collectDataFromReducer((Map<Checkin,Set<String>>)reply.getData());
+//        collectDataFromReducer((HashMap<Checkin, ArrayList<String>>) Network.sendRequest(message, conf.getReducer()));
     }
 	
-	private void collectDataFromReducer(HashMap<Checkin, ArrayList<String>> data) {
-		System.out.println("Got data");
+	private void collectDataFromReducer(Map<Checkin,Set<String>> data) {
+		Address reducerAddr = conf.getReducer();
+		System.out.println("Got data from Reducer at " + reducerAddr.getIp() + ":" + reducerAddr.getPort());
 		System.out.println(data);
 	}
 }

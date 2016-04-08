@@ -1,7 +1,10 @@
 package gr.aueb.cs.ds.worker.map;
 
-public class Checkin {
+import java.io.Serializable;
+
+public class Checkin implements Serializable {
 	
+	private static final long serialVersionUID = -1137318829935496331L;
 	private String POI;
 	private String POI_name;
 	private String POI_category;

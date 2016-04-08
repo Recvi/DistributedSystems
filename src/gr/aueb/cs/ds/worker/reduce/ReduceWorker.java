@@ -1,9 +1,5 @@
 package gr.aueb.cs.ds.worker.reduce;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,7 +10,7 @@ import java.util.stream.Collectors;
 
 import gr.aueb.cs.ds.ConfigReader;
 import gr.aueb.cs.ds.network.Message;
-import gr.aueb.cs.ds.network.Network;
+import gr.aueb.cs.ds.network.NetworkHandler;
 import gr.aueb.cs.ds.network.Message.MessageType;
 import gr.aueb.cs.ds.worker.map.Checkin;
 
@@ -28,33 +24,30 @@ public class ReduceWorker extends Thread{
      * Will use Map<String,ArrayList<String>> for now.
      */
 	private ArrayList<ArrayList<Checkin>> data;
-	private Socket con;
 	private Message msg;
 	private ConfigReader conf;
-	private ObjectInputStream in;
-	private ObjectOutputStream out;
+	private NetworkHandler net;
 
 
-    public ReduceWorker(Socket con, Message msg, ConfigReader conf, ArrayList<ArrayList<Checkin>> mapper_data) {
-    	this.con = con;
+    public ReduceWorker(NetworkHandler net, Message msg, ConfigReader conf, ArrayList<ArrayList<Checkin>> mapper_data) {
     	this.data = mapper_data;
     	this.msg = msg;
     	this.conf = conf;
-    	
-    	try {
-			this.out = new ObjectOutputStream(con.getOutputStream());
-			this.in = new ObjectInputStream(con.getInputStream());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-    
+    	this.net = net;    
     }
     
     public void run() {
     	
+    	System.out.println("\t----- REDUCER -----");
+    	
     	Map<Checkin,Set<String>> results = reduce();
     	
-    	Network.sendRequest(con, new Message(msg.getClientId(), MessageType.ACK, results), conf.getClient());
+    	System.out.println("\tReducer: finished reducing. POI's: " + results.size());
+    	
+//    	Network.sendRequest(con, new Message(msg.getClientId(), MessageType.ACK, results), conf.getClient());
+    	System.out.println("\tReducer: Sending data to Client.");
+    	net.sendMessage(new Message(msg.getClientId(), MessageType.ACK, results));
+    	net.close();
     	
     }
    
@@ -65,7 +58,7 @@ public class ReduceWorker extends Thread{
     	 * Get global top k
     	 */
     	List<List<Checkin>> top_data = data.stream().sorted((a1,a2) -> (-1) * Integer.compare(a1.size(), a2.size()))
-    	.limit(conf.getK()).collect(Collectors.toList());
+    	.limit(conf.getK()).collect(Collectors.toCollection(ArrayList::new));
     	
     	/*
     	 * Convert from:

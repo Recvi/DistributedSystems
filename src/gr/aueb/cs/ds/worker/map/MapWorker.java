@@ -4,6 +4,7 @@ import gr.aueb.cs.ds.ConfigReader;
 import gr.aueb.cs.ds.network.Address;
 import gr.aueb.cs.ds.network.Message;
 import gr.aueb.cs.ds.network.Network;
+import gr.aueb.cs.ds.network.NetworkHandler;
 import gr.aueb.cs.ds.network.Message.MessageType;
 
 import java.io.IOException;
@@ -24,32 +25,26 @@ import java.util.stream.Collectors;
 
 public class MapWorker extends Thread {
 
-    private Socket con;
+	private NetworkHandler net;
     private Message msg;
     private ConfigReader conf;
-	private ObjectInputStream in;
-	private ObjectOutputStream out;
+
 	
 	private ArrayList<Checkin> checkins;
 	
     
-    public MapWorker (Socket con, Message msg, ConfigReader conf) {
+    public MapWorker (NetworkHandler net, Message msg, ConfigReader conf) {
     	
-    	this.con = con;
+    	this.net = net;
     	this.msg = msg;
     	this.conf = conf;
-    	try {
-			this.out = new ObjectOutputStream(con.getOutputStream());
-			this.in = new ObjectInputStream(con.getInputStream());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-    	checkins = new ArrayList<Checkin>();
+
+    	this.checkins = new ArrayList<Checkin>();
     }
 
     public void run() {
     	
-    	System.out.println("Mapper: Started.");
+    	System.out.println("\t----- MAPPER ------");
     	
     	/*
     	 * Reading the data in the same order we sent them.
@@ -61,26 +56,29 @@ public class MapWorker extends Thread {
     	 * Query db and fill checkins data structure.
     	 */
     	getDataFromDb(msgData);
-    	
-    	System.out.println("Mapper: Got Data from Db.");
+   
+    	System.out.println("\tMapper: Got Data from Db. Records: " + checkins.size());
     	
     	
     	List<List<Checkin>> results = map(msgData);
+    	
+    	System.out.println("\tMapper: finished mapping. POI's: " + results.size());
     	
 
     	
     	/*
     	 * Send intermediate data to reducer.
     	 */ 
+    	System.out.println("\tMapper: Sending data to REDUCER.");
         sendToReducer(results);
-    	System.out.println("Mapper: Send data to reducer.");
+    	
         
         
     	/*
     	 * Notify client that the work is completed.
     	 */
         notifyMaster();
-        System.out.println("Mapper: notified Master.");
+        System.out.println("\tMapper: notified Master.");
     	
     }
 
@@ -114,14 +112,13 @@ public class MapWorker extends Thread {
     			() -> new ArrayList<>(),  // Supplier
 				(c, e) -> {				// Accumulator
 					Map<String, List<Checkin>> groupedCheckins = e.stream().collect(
-							Collectors.groupingBy( s -> s.getPOI())
-							);
+							Collectors.groupingBy( s -> s.getPOI()));
 				 	/*
 			    	 * Get top k results
 			    	 */
 					List<List<Checkin>> res = groupedCheckins.values().stream().sorted(
 							(a1,a2) -> (-1) * Integer.compare(a1.size(), a2.size())  // get reverse order: DESC 
-							).limit(conf.getK()).collect(Collectors.toList());
+							).limit(conf.getK()).collect(Collectors.toCollection(ArrayList::new));
 					
 					
 					c.addAll(res); // add all the Lists to the supplier.
@@ -136,18 +133,29 @@ public class MapWorker extends Thread {
     * Sends the mapped data to $reducerAddress.
     * Needs to return boolean for Error Handling.
     */
-    private Object sendToReducer(List<List<Checkin>> results) {
-    	return Network.sendRequest(con, new Message(msg.getClientId(), MessageType.MAPPER_DATA, results), conf.getReducer());
+    private Message sendToReducer(List<List<Checkin>> results) {
+//    	return Network.sendRequest(con, new Message(msg.getClientId(), MessageType.MAPPER_DATA, results), conf.getReducer());
+    	NetworkHandler net_reducer = new NetworkHandler(conf.getReducer());
+    	net_reducer.sendMessage(new Message(msg.getClientId(), MessageType.MAPPER_DATA, results));
+    	Message reply = net_reducer.readMessage();
+    	net_reducer.close();
+    	return reply;
     }
 
 
-    private Object notifyMaster() {
-        return Network.sendRequest(con, new Message(msg.getClientId(), MessageType.ACK, new String("DONE.")), conf.getClient());
+    /*
+     * Notifies client that called for MAP that the job is done.
+     */
+    private void notifyMaster() {
+//        return Network.sendRequest(con, new Message(msg.getClientId(), MessageType.ACK, new String("DONE.")), conf.getClient());
+    	net.sendMessage(new Message(msg.getClientId(), MessageType.ACK, new String("DONE.")));
+    	net.close();
     }
     
     private void getDataFromDb(ArrayList<String> msgData) {
     	/*
     	 * Connect to db and get the data assigned to me.
+    	 * jdbc:mysql://HOST:PORT/DB_NAME?user=USERNAME&password=YOURPASS
     	 */
     	Address db = conf.getDb();
     	String dbURL = "jdbc:mysql://" + db.getIp() + ":" + db.getPort() + "/"
@@ -157,7 +165,7 @@ public class MapWorker extends Thread {
     	
     	
     	String query = "SELECT POI, POI_name, POI_category, latitude, longitude, time, photos "
-    			+ "FROM checkins WHERE "
+    			+ "FROM " + conf.getDb_name() + ".checkins WHERE "
     			+ "latitude >= " + msgData.get(0) + " AND latitude <= " + msgData.get(2)
     			+ " AND longitude >= " + msgData.get(1) + " AND longitude <= " + msgData.get(3)
     			+ " AND time >= '" + msgData.get(4) + "' AND time <= '" + msgData.get(5)

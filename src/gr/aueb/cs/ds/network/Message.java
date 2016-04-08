@@ -6,7 +6,11 @@ import java.io.Serializable;
 public class Message implements Serializable {
 	
     public enum MessageType {
-    	MAP, REDUCE, MAPPER_DATA, ACK
+    	MAP,           // Start Mapping
+    	REDUCE,        // Start Reducing
+    	MAPPER_DATA,   // Mapper sends data to Reducer
+    	ACK,           // Acknowledgement: Done or everything okay
+    	ERROR          // Something went wrong
 	}
 
 	private static final long serialVersionUID = 7817450821242935569L;
