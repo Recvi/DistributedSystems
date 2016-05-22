@@ -34,9 +34,7 @@ import gr.aueb.cs.ds.dsapp.R;
 public class SelectArea extends Activity implements GoogleMap.OnInfoWindowClickListener,
         GoogleMap.OnMarkerClickListener, GoogleMap.OnMarkerDragListener{
 
-    private GoogleMap map;
     private GoogleMap googleMap;
-    private MapView mapView;
     private Polygon polygon;
     private Marker point1;
     private Marker point2;
@@ -82,6 +80,8 @@ public class SelectArea extends Activity implements GoogleMap.OnInfoWindowClickL
 
     private void nextActivity() {
         Intent intent = new Intent(this, SelectTime.class);
+        intent.putExtra("Point1", point1.getPosition());
+        intent.putExtra("Point2", point2.getPosition());
         startActivity(intent);
     }
 

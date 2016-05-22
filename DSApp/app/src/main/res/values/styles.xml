@@ -2,9 +2,9 @@
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.Design.NoActionBar">
-        <!-- Customize your theme here. -->
+        <!-- Customize your theme here.
         <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="android:background">#ffffff</item>
+        <item name="android:background">#ffffff</item> -->
     </style>
 
     <style name="AppTheme.NoActionBar">
