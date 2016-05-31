@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.UUID;
@@ -47,21 +48,30 @@ public class DummyClient {
 		this.clientId = UUID.randomUUID().toString();
 		
 		Scanner in = new Scanner(System.in);
+		String nextLine;
 
 		/*
 		 * Getting all the data to perform a search.
 		 */
 		System.out.println("To do a search for popular Points of Interest in an area, fill in the next fields.");
 		System.out.println("Define a region by providing the lower left and top right point.");
+		
 		System.out.print("Lower left point (latitude,longitude): ");
-		String[] llpoint = in.nextLine().split(",");   // Getting the lower left point
+		nextLine = in.nextLine();
+		String[] llpoint = nextLine.isEmpty() ? "40.55,-75.0".split(",") : nextLine.split(",");   // Getting the lower left point
+		
 		System.out.print("Top right point (latitude,longitude): ");
-		String[] trpoint = in.nextLine().split(",");   // Getting the top right point
+		nextLine = in.nextLine();
+		String[] trpoint =  nextLine.isEmpty() ? "40.99,-73.0".split(",") : nextLine.split(",");   // Getting the top right point
+		
 		System.out.println("Define the time frame of your search by providing a date and time starting point and ending point.");
 		System.out.print("Date and time starting point (YYYY-MM-DD hh:mm:ss): ");
-		String datetimeStart = in.nextLine();  // Getting the starting datetime
+		nextLine = in.nextLine();
+		String datetimeStart = nextLine.isEmpty() ? "0000-01-01 00:00:00" : nextLine;  // Getting the starting datetime
+		
 		System.out.print("Date and time ending point (YYYY-MM-DD hh:mm:ss): ");
-		String datetimeEnd = in.nextLine();   // Getting the ending datetime
+		nextLine = in.nextLine();
+		String datetimeEnd = nextLine.isEmpty() ? "2022-01-01 00:00:00" : nextLine;   // Getting the ending datetime
 		
 		/*
 		 * Starting the search.
@@ -81,9 +91,7 @@ public class DummyClient {
 		double topRightLat = Double.parseDouble(trpoint[0]);
 	    double latDiff = topRightLat - lowerLeftLat;
 	    double latStep = latDiff / mapperAddresses.size();
-	    
-//	    System.out.println("latStep: " + latStep);
-	    
+	       
 	    topRightLat = lowerLeftLat + latStep;   // reinitialize for first mapper.
 	    
 	    for (Address addr : mapperAddresses) {
@@ -155,6 +163,10 @@ public class DummyClient {
 	private void collectDataFromReducer(Map<Checkin,Set<String>> data) {
 		Address reducerAddr = conf.getReducer();
 		System.out.println("Got data from Reducer at " + reducerAddr.getIp() + ":" + reducerAddr.getPort());
-		System.out.println(data);
+		for(Entry<Checkin,Set<String>> d : data.entrySet()) {
+			System.out.println("POI: "+d.getKey().getPOI()+", counter: " + d.getKey().getPhotos()+", photos: "+d.getValue().size()+
+					", POI_name: "+d.getKey().getPOI_name()+", POI_category: "+d.getKey().getPOI_category());
+			
+		}
 	}
 }

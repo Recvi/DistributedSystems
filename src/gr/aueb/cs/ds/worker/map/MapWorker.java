@@ -77,8 +77,8 @@ public class MapWorker extends Thread {
     	/*
     	 * Notify client that the work is completed.
     	 */
+        System.out.println("\tMapper: notifying Master.");
         notifyMaster();
-        System.out.println("\tMapper: notified Master.");
     	
     }
 
@@ -92,6 +92,7 @@ public class MapWorker extends Thread {
     	 * Get the number of working cpu cores.
     	 */
     	int cores = Runtime.getRuntime().availableProcessors();
+    	System.out.println("\tMapper:Splitting data to "+cores+" cores.");
     	
     	/*
     	 * Split data to fit cores.
@@ -116,16 +117,44 @@ public class MapWorker extends Thread {
 				 	/*
 			    	 * Get top k results
 			    	 */
-					List<List<Checkin>> res = groupedCheckins.values().stream().sorted(
+					ArrayList<List<Checkin>> res = groupedCheckins.values().stream().sorted(
 							(a1,a2) -> (-1) * Integer.compare(a1.size(), a2.size())  // get reverse order: DESC 
 							).limit(conf.getK()).collect(Collectors.toCollection(ArrayList::new));
 					
 					
-					c.addAll(res); // add all the Lists to the supplier.
+					c.addAll(res); // add all the Lists to the supplier.					
 				},
-				(c1, c2) -> c1.addAll(c2));  // Combiner: merge intermediate results
+				(c1, c2) -> {  // Combiner: merge intermediate results
+					
+					c1.addAll(c2);
+					
+//					System.out.println("IN");
+//					if (c1.size() == 0) {
+//						c1.addAll(c2);
+////						System.out.println("INNNER");
+//					} else {
+//						
+//						// NEVER GOES IN HERE
+//						/*
+//						 * Because individual lists are ordered we use a simple
+//						 * algorithm to get the top k merged results.
+//						 */
+//						ArrayList<List<Checkin>> l = new ArrayList<List<Checkin>>();
+//						int i = 0;
+//						int j = 0;
+//						while (l.size() < conf.getK()) {
+////							System.out.println("i: "+i+", j: "+j+", l.size: "+l.size()+", c1.size: "+c1.size()+", c2.size: "+c2.size());
+//							l.add( ((c1.get(i).size() >= c2.get(j).size()) ? c1.get(i++) : c2.get(j++)) );
+//							
+//						}
+//						c1 = l;
+//					}
+				}
+		);
        
-    	return results;
+    	return results.stream().sorted(
+    			(a1, a2) -> (-1) * Integer.compare(a1.size(), a2.size())
+    			).limit(conf.getK()).collect(Collectors.toCollection(ArrayList::new));
     }
 
 

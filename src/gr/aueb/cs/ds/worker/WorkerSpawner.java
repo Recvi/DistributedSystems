@@ -36,7 +36,7 @@ public class WorkerSpawner {
 			System.out.println("Worker Spawner: REDUCE");
 		} else if (args[0].equals("MAP")){
 			addr = conf.getMappers().get(Integer.parseInt(args[1]));
-			System.out.println("Worker Spawner: " + args[1] + " " + args[1]);
+			System.out.println("Worker Spawner: " + args[0] + " " + args[1]);
 		}
 		
 	
@@ -69,7 +69,6 @@ public class WorkerSpawner {
 				case REDUCE:
 					
 					System.out.println("Worker Spawner: Message is REDUCE.");
-					
 					Thread reduce = new ReduceWorker(net, msg, conf, mapper_data.get(msg.getClientId()));
 					threads.add(reduce);
 					reduce.start();
@@ -78,10 +77,12 @@ public class WorkerSpawner {
 					
 					System.out.println("Worker Spawner: Got data from MAPPER.");
 					
-//					Thread iw = new IntermediateWorker(connection, msg);
-//					threads.add(iw);
-//					iw.start();
-					mapper_data.put(msg.getClientId(),((ArrayList<ArrayList<Checkin>>)msg.getData()));
+					if (!mapper_data.containsKey(msg.getClientId())) {
+						mapper_data.put(msg.getClientId(), ((ArrayList<ArrayList<Checkin>>)msg.getData()));
+					} else {
+						mapper_data.get(msg.getClientId()).addAll( ((ArrayList<ArrayList<Checkin>>)msg.getData()) );
+					}
+					
 					net.sendMessage(new Message(msg.getClientId(), MessageType.ACK, new String("GOT DATA.")));
 					net.close();
 					break;

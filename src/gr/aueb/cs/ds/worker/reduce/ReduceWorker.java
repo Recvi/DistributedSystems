@@ -1,8 +1,8 @@
 package gr.aueb.cs.ds.worker.reduce;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -54,6 +54,7 @@ public class ReduceWorker extends Thread{
 
 
     private Map<Checkin,Set<String>> reduce() {
+    	
     	/*
     	 * Get global top k
     	 */
@@ -66,12 +67,15 @@ public class ReduceWorker extends Thread{
     	 */
     	Map<Checkin,Set<String>> results = top_data.parallelStream()
     		.collect(
-				()-> new HashMap<>(),
+				()-> new LinkedHashMap<>(),
 				(c,e) -> {
 					
+					
 					Checkin checkin = e.get(0);  // get a random Checkin, let's say first one.
-//					e.size(); // Number of Checkins per POI.
-//					TODO: Add Number of Checkins per POI to results.
+					
+//					System.out.println("POI: "+checkin.getPOI()+", size: "+ e.size());
+
+
 					/*
 					 * Add the photos from all the Checkins
 					 * into a Set to remove duplicates.
@@ -80,15 +84,12 @@ public class ReduceWorker extends Thread{
 							 ()-> new HashSet<>(),
 							 (s,el) -> s.add(el.getPhotos()),
 							 (s1, s2) -> s1.addAll(s2));
+					
+					checkin.setPhotos(""+e.size());
 					c.put(checkin, photos);	 
 				},
 				(m1,m2) -> m1.putAll(m2));
     	
     	return results;
     }
-
-    private void getResults(Map<Integer,Object> data) {
-        /* ... */
-    }
-
 }
