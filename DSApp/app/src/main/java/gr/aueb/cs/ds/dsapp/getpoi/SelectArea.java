@@ -108,18 +108,18 @@ public class SelectArea extends Activity implements GoogleMap.OnInfoWindowClickL
         //mMap = googleMap;
 
         googleMap.getUiSettings().setRotateGesturesEnabled(false);
-        // Add a marker in Sydney and move the camera
 
-        LatLng def1 = new LatLng(37.9825937, 23.741602);
-        LatLng def2 = new LatLng(37.9989654, 23.7261526);
-
+        LatLng def1 = new LatLng(40.55, -75.0);
+        LatLng def2 = new LatLng(40.99, -73.0);
+        //llpoint = "40.55,-75.0".split(",");
+        //trpoint =  "40.99,-73.0".split(",");
 
         point1 = googleMap.addMarker(
                 new MarkerOptions().position(def1).title("Point 1").flat(true).draggable(true));
         point2 = googleMap.addMarker(
                 new MarkerOptions().position(def2).title("Point 2").flat(true).draggable(true));
 
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(def1, 15));
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(def1, 10));
 
         /*PolygonOptions options = new PolygonOptions();
         options.add(def1, def2);

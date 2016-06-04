@@ -94,9 +94,13 @@ public class SelectTime extends Activity {
 
     private void nextActivity() {
         Intent intent = new Intent(this, DisplayResults.class);
+
         intent.putExtra("Point1", point1);
         intent.putExtra("Point2", point2);
-        startActivity(intent);
+
+        intent.putExtra("DateStart", lPickDate.getText());
+        intent.putExtra("DateEnd", hPickDate.getText());
+
         startActivity(intent);
     }
 
@@ -145,14 +149,14 @@ public class SelectTime extends Activity {
         this.lPickDate.setText(
                 new StringBuilder()
                         // Month is 0 based so add 1
-                        .append(lDay).append("-")
+                        .append(lYear).append("-")
                         .append(lMonth + 1).append("-")
-                        .append(lYear).append(" "));
+                        .append(lDay).append(" "));
         this.hPickDate.setText(
                 new StringBuilder()
                         // Month is 0 based so add 1
-                        .append(hDay).append("-")
+                        .append(hYear).append("-")
                         .append(hMonth + 1).append("-")
-                        .append(hYear).append(" "));
+                        .append(hDay).append(" "));
     }
 }

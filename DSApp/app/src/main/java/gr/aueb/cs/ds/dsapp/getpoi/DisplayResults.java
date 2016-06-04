@@ -4,6 +4,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.Display;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -53,15 +56,54 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
         this.pendingRequests = mapperAddresses.size();
         this.clientId = UUID.randomUUID().toString();
 
+        Button next = (Button) findViewById(R.id.go_back2);
+        next.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
         Intent intent= getIntent();
         Bundle bundle = intent.getExtras();
         LatLng point1 = (LatLng) bundle.get("Point1");
         LatLng point2 = (LatLng) bundle.get("Point2");
+        datetimeStart = (String) bundle.get("DateStart") +  "00:00:00";
+        datetimeEnd = (String) bundle.get("DateEnd") + "00:00:00";
 
-        llpoint = "40.55,-75.0".split(",");
-        trpoint =  "40.99,-73.0".split(",");
-        datetimeStart = "0000-01-01 00:00:00";
-        datetimeEnd = "2022-01-01 00:00:00";
+        llpoint = new String[2];
+        trpoint = new String[2];
+
+        if (point1.latitude < point2.latitude) {
+            llpoint[0] = Double.toString(point1.latitude);
+        } else {
+            llpoint[0] = Double.toString(point2.latitude);
+        }
+        if (point1.longitude < point2.longitude) {
+            llpoint[1] = Double.toString(point1.longitude);
+        } else {
+            llpoint[1] = Double.toString(point2.longitude);
+        }
+
+        if (point1.latitude > point2.latitude) {
+            trpoint[0] = Double.toString(point1.latitude);
+        } else {
+            trpoint[0] = Double.toString(point2.latitude);
+        }
+        if (point1.longitude > point2.longitude) {
+            trpoint[1] = Double.toString(point1.longitude);
+        } else {
+            trpoint[1] = Double.toString(point2.longitude);
+        }
+
+
+
+        //llpoint = "40.55,-75.0".split(",");
+        //trpoint =  "40.99,-73.0".split(",");
+        //datetimeStart = "0000-01-01 00:00:00";
+        //datetimeEnd = "2022-01-01 00:00:00";
+
+        System.out.println(datetimeStart);
+        System.out.println(datetimeEnd);
 
         googleMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map2)).getMap();
         MapsInitializer.initialize(this);
@@ -80,15 +122,32 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
     }
 
     public void onInfoWindowClick(Marker marker) {
-        Toast.makeText(this, "Info window clicked",
-                Toast.LENGTH_SHORT).show();
-        System.out.println("yolo");
+        //System.out.println(marker.getTitle());
+
+        for (int i = 0; i < checkins.size(); i++) {
+            //System.out.println(checkins.get(i).getPOI_name());
+
+            if (checkins.get(i).getPOI_name().equals(marker.getTitle())) {
+                System.out.println(checkins.get(i).getPOI_category());
+                System.out.println(checkins.get(i).getPhotos());
+                System.out.println(imageSet.get(marker.getTitle()));
+                Intent intent = new Intent(this, DisplayPOI.class);
+                intent.putExtra("Checkin", checkins.get(i));
+
+                intent.putExtra("Photos", imageSet.get(marker.getTitle()).toArray());
+                startActivity(intent);
+                break;
+            }
+        }
+
     }
 
+    ArrayList<Checkin> checkins = new ArrayList<Checkin>();
+    Map<String,Set<String>> imageSet = new HashMap<String,Set<String>>();
 
     private class getPois extends AsyncTask<String, String, String> {
 
-        ArrayList<Checkin> checkins = new ArrayList<Checkin>();
+       // ArrayList<Checkin> checkins = new ArrayList<Checkin>();
         private boolean done = false;
 
         protected String doInBackground(String... strings) {
@@ -110,7 +169,6 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
             }
             System.out.println("sdfgdfgdfg3");
         }
-
 
         private void distributeToMappers(String[] llpoint, String[] trpoint, String datetimeStart, String datetimeEnd) {
 
@@ -181,17 +239,20 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
 
         private void collectDataFromReducer(Map<Checkin,Set<String>> data) {
             Address reducerAddr = conf.getReducer();
+
             System.out.println("Got data from Reducer at " + reducerAddr.getIp() + ":" + reducerAddr.getPort());
             for(Map.Entry<Checkin,Set<String>> d : data.entrySet()) {
 
-                System.out.println("POI: "+d.getKey().getPOI()+", counter: " + d.getKey().getPhotos()+", photos: "+d.getValue().size()+
-                        ", POI_name: "+d.getKey().getPOI_name()+", POI_category: "+d.getKey().getPOI_category());
-
+                //System.out.println("POI: "+d.getKey().getPOI()+", counter: " + d.getKey().getPhotos()+", photos: "+d.getValue().size()+
+                //        ", POI_name: "+d.getKey().getPOI_name()+", POI_category: "+d.getKey().getPOI_category());
+               // System.out.println (d.getValue() );
                 checkins.add(d.getKey());
-                LatLng pos = new LatLng(d.getKey().getLatitude(), d.getKey().getLongitude());
+                imageSet.put(d.getKey().getPOI_name(), d.getValue());
+                //LatLng pos = new LatLng(d.getKey().getLatitude(), d.getKey().getLongitude());
 
             }
             done = true;
         }
     }
+
 }

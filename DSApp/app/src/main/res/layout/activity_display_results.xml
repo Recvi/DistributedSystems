@@ -47,14 +47,9 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:id="@+id/cancel_button"
-            android:text="Cancel"/>
-        <Button
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:id="@+id/next_button"
-            android:text="Next"/>
+            android:id="@+id/go_back2"
+            android:text="Go Back"/>
+
 
     </LinearLayout>
 </LinearLayout>
