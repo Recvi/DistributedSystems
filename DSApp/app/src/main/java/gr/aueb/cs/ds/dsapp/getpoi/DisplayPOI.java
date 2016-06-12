@@ -15,6 +15,8 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import org.w3c.dom.Text;
+
 import java.io.InputStream;
 import java.util.Arrays;
 
@@ -42,28 +44,24 @@ public class DisplayPOI extends Activity {
         Checkin point1 = (Checkin) bundle.get("Checkin");
         Object[] photos = (Object[]) bundle.get("Photos");
 
-        for (int i = 0; i < photos.length; i++) {
-            System.out.println((String) photos[i]);
-            //addImage("TOOLO" + i);
-
-        }
+        TextView title = (TextView) findViewById(R.id.poi_name_placeholder);
+        title.setText(point1.getPOI_name());
         new DownloadImageTask().execute(Arrays.copyOf(photos, photos.length, String[].class));
-
     }
+
     private void addImage(Bitmap imageUrl){
         TableLayout table = (TableLayout) findViewById(R.id.table);
         TableRow row = new TableRow(this);
         ImageView imageBox = new ImageView(this);
-        //imageBox.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         imageBox.setImageBitmap(imageUrl);
         row.addView(imageBox);
         table.addView(row, new TableLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
     }
 
     private class DownloadImageTask extends AsyncTask<String, Void, Bitmap[]> {
 
         public DownloadImageTask() {
+
         }
 
         protected Bitmap[] doInBackground(String... urls) {

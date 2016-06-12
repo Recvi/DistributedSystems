@@ -4,9 +4,11 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.view.View;
 import android.widget.Button;
@@ -91,46 +93,27 @@ public class SelectArea extends Activity implements GoogleMap.OnInfoWindowClickL
     }
 
     public void onInfoWindowClick(Marker marker) {
-        Toast.makeText(this, "Info window clicked",
-                Toast.LENGTH_SHORT).show();
-        System.out.println("yolo");
-       /* polygon.remove();
-
-        PolygonOptions options = new PolygonOptions();
-        options.add(point1.getPosition(), point2.getPosition());
-
-        options.strokeWidth(10);
-
-        polygon = googleMap.addPolygon(options);*/
+        System.out.println("InfoWindowClicked");
     }
 
     public void onMapReady(GoogleMap googleMap) {
-        //mMap = googleMap;
-
         googleMap.getUiSettings().setRotateGesturesEnabled(false);
 
-        LatLng def1 = new LatLng(40.55, -75.0);
-        LatLng def2 = new LatLng(40.99, -73.0);
-        //llpoint = "40.55,-75.0".split(",");
-        //trpoint =  "40.99,-73.0".split(",");
+        SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        String[] llpoint = SP.getString("llp", "40.55,-75.0").split(",");
+        String[] trpoint = SP.getString("trp", "40.99,-73.0").split(",");
+        LatLng def1 = new LatLng(Float.parseFloat(llpoint[0]), Float.parseFloat(llpoint[1]));
+        LatLng def2 = new LatLng(Float.parseFloat(trpoint[0]), Float.parseFloat(trpoint[1]));
 
+        LatLng newYork = new LatLng(40.7127784,-74.0409606);
         point1 = googleMap.addMarker(
                 new MarkerOptions().position(def1).title("Point 1").flat(true).draggable(true));
         point2 = googleMap.addMarker(
                 new MarkerOptions().position(def2).title("Point 2").flat(true).draggable(true));
 
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(def1, 10));
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(newYork, 9));
 
-        /*PolygonOptions options = new PolygonOptions();
-        options.add(def1, def2);
-        options.strokeWidth(10);
-        options.fillColor(Color.BLACK);
-
-        polygon = mMap.addPolygon(options);
-        */
         highlightArea();
-       // googleMap.setOnInfoWindowClickListener(this);
-       // googleMap.setOnMarkerDragListener(this);
     }
 
     private void highlightArea() {
@@ -168,21 +151,6 @@ public class SelectArea extends Activity implements GoogleMap.OnInfoWindowClickL
     public void onMarkerDragEnd(Marker marker)
     {
         highlightArea();
-        /*System.out.println(marker.getTitle() + " : " + marker.getPosition());
-
-        polygon.remove();
-
-        PolygonOptions options = new PolygonOptions();
-        options.add(point1.getPosition(), point2.getPosition());
-
-        options.strokeWidth(10);
-
-        polygon = mMap.addPolygon(options);*/
-       /* my_polygon.remove();
-        polygon.getPoints().remove(marker.getPosition());  //marker still in polygon list
-        polygon.add(marker.getPosition());
-        my_polygon=map.addPolygon(polygon); //created new polygon which contains previous marker position
-        */
     }
 
 }

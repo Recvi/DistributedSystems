@@ -50,7 +50,7 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_display_results);
 
-        this.conf = new Config();
+        this.conf = new Config(getBaseContext());
         this.mappersData = new HashMap<Address, ArrayList<String>>();
         this.mapperAddresses = conf.getMappers();
         this.pendingRequests = mapperAddresses.size();
@@ -95,13 +95,6 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
             trpoint[1] = Double.toString(point2.longitude);
         }
 
-
-
-        //llpoint = "40.55,-75.0".split(",");
-        //trpoint =  "40.99,-73.0".split(",");
-        //datetimeStart = "0000-01-01 00:00:00";
-        //datetimeEnd = "2022-01-01 00:00:00";
-
         System.out.println(datetimeStart);
         System.out.println(datetimeEnd);
 
@@ -111,14 +104,13 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
         //onMapLoaded();
         onMapReady(googleMap);
 
-
         new getPois().execute("", "", "");
     }
 
     public void onMapReady(GoogleMap googleMap) {
         googleMap.getUiSettings().setRotateGesturesEnabled(false);
-
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(40.55, -75.00), 10));
+        LatLng newYork = new LatLng(40.7127784,-74.0409606);
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(newYork, 10));
     }
 
     public void onInfoWindowClick(Marker marker) {

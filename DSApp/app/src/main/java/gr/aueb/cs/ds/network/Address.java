@@ -14,7 +14,13 @@ public class Address {
         this.ip = ip;
         this.port = port;
     }
-    
+
+    public Address(String ipWithPort) {
+		String[] temp = ipWithPort.split(":");
+		this.ip = temp[0];
+		this.port = Integer.parseInt(temp[1]);
+	}
+
     public String getIp() {
 		return ip;
 	}
