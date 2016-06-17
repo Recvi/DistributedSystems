@@ -59,7 +59,6 @@ public class SelectTime extends Activity {
             }
         });
 
-
         // Set Defaults
         lYear = 2001;
         lMonth = 2;
@@ -148,13 +147,11 @@ public class SelectTime extends Activity {
     private void updateDisplay() {
         this.lPickDate.setText(
                 new StringBuilder()
-                        // Month is 0 based so add 1
                         .append(lYear).append("-")
                         .append(lMonth + 1).append("-")
                         .append(lDay).append(" "));
         this.hPickDate.setText(
                 new StringBuilder()
-                        // Month is 0 based so add 1
                         .append(hYear).append("-")
                         .append(hMonth + 1).append("-")
                         .append(hDay).append(" "));

@@ -3,14 +3,11 @@ package gr.aueb.cs.ds.dsapp;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-
 import java.util.ArrayList;
 
 import gr.aueb.cs.ds.network.Address;
 
-/**
- * Created by root on 5/22/16.
- */
+
 public class Config {
     private ArrayList<Address> mappers;
     private Address reducer;

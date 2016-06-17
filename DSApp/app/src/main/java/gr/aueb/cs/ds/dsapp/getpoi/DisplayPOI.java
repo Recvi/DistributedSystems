@@ -11,6 +11,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -53,7 +55,15 @@ public class DisplayPOI extends Activity {
         TableLayout table = (TableLayout) findViewById(R.id.table);
         TableRow row = new TableRow(this);
         ImageView imageBox = new ImageView(this);
+
+        imageBox.setPadding(0, 10, 0, 10);
+        imageBox.setBackgroundColor(Color.WHITE);
         imageBox.setImageBitmap(imageUrl);
+        imageBox.setAdjustViewBounds(true);
+        //imageBox.getLayoutParams().height = 20;
+      //  ScrollView.
+       //// ScrollView.LayoutParams layoutParams = new LinearLayout.LayoutParams(30, 30);
+      //  imageBox.setLayoutParams(layoutParams);
         row.addView(imageBox);
         table.addView(row, new TableLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
     }
@@ -84,6 +94,7 @@ public class DisplayPOI extends Activity {
             for ( int i = 0; i < result.length; i++){
                 addImage(result[i]);
             }
+            findViewById(R.id.progress_bar2).setVisibility(View.GONE);
         }
     }
 }

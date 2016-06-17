@@ -30,6 +30,15 @@
         android:layout_weight="8"
         android:background="#ffffff"
         android:id="@+id/map_area">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <ProgressBar
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:indeterminate="true"
+                android:id="@+id/progress_bar2"/>
+
         <ScrollView android:id="@+id/ScrollView01" android:layout_width="match_parent" android:layout_height="wrap_content" >
             <TableLayout
                 android:layout_width="match_parent"
@@ -37,6 +46,7 @@
                 android:stretchColumns="0"
                 android:id="@+id/table"/>
         </ScrollView>
+        </RelativeLayout>
     </LinearLayout>
 
     <LinearLayout

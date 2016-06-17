@@ -95,13 +95,9 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
             trpoint[1] = Double.toString(point2.longitude);
         }
 
-        System.out.println(datetimeStart);
-        System.out.println(datetimeEnd);
-
         googleMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map2)).getMap();
         MapsInitializer.initialize(this);
         googleMap.setOnInfoWindowClickListener(this);
-        //onMapLoaded();
         onMapReady(googleMap);
 
         new getPois().execute("", "", "");
@@ -114,10 +110,8 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
     }
 
     public void onInfoWindowClick(Marker marker) {
-        //System.out.println(marker.getTitle());
 
         for (int i = 0; i < checkins.size(); i++) {
-            //System.out.println(checkins.get(i).getPOI_name());
 
             if (checkins.get(i).getPOI_name().equals(marker.getTitle())) {
                 System.out.println(checkins.get(i).getPOI_category());
@@ -159,7 +153,7 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
                 LatLng pos = new LatLng(checkins.get(i).getLatitude(), checkins.get(i).getLongitude());
                 googleMap.addMarker(new MarkerOptions().position(pos).title(checkins.get(i).getPOI_name()));
             }
-            System.out.println("sdfgdfgdfg3");
+            findViewById(R.id.progress_bar1).setVisibility(View.GONE);
         }
 
         private void distributeToMappers(String[] llpoint, String[] trpoint, String datetimeStart, String datetimeEnd) {
@@ -231,19 +225,14 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
 
         private void collectDataFromReducer(Map<Checkin,Set<String>> data) {
             Address reducerAddr = conf.getReducer();
-
             System.out.println("Got data from Reducer at " + reducerAddr.getIp() + ":" + reducerAddr.getPort());
-            for(Map.Entry<Checkin,Set<String>> d : data.entrySet()) {
 
-                //System.out.println("POI: "+d.getKey().getPOI()+", counter: " + d.getKey().getPhotos()+", photos: "+d.getValue().size()+
-                //        ", POI_name: "+d.getKey().getPOI_name()+", POI_category: "+d.getKey().getPOI_category());
-               // System.out.println (d.getValue() );
+            for(Map.Entry<Checkin,Set<String>> d : data.entrySet()) {
                 checkins.add(d.getKey());
                 imageSet.put(d.getKey().getPOI_name(), d.getValue());
-                //LatLng pos = new LatLng(d.getKey().getLatitude(), d.getKey().getLongitude());
-
             }
             done = true;
+
         }
     }
 

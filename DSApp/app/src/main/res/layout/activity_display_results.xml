@@ -29,11 +29,21 @@
         android:layout_weight="8"
         android:background="#ffffff"
         android:id="@+id/map_area">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        <ProgressBar
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:indeterminate="true"
+            android:id="@+id/progress_bar1"
+            android:translationZ="10dp"/>
         <fragment
             android:id="@+id/map2"
             android:name="com.google.android.gms.maps.MapFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
+        </RelativeLayout>
     </LinearLayout>
 
     <LinearLayout

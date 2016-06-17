@@ -2,7 +2,9 @@ package gr.aueb.cs.ds.dsapp.getpoi;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -10,8 +12,13 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
+import android.text.Editable;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
@@ -27,6 +34,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
+
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 
@@ -52,10 +61,62 @@ public class SelectArea extends Activity implements GoogleMap.OnInfoWindowClickL
         MapsInitializer.initialize(this);
         googleMap.setOnInfoWindowClickListener(this);
         googleMap.setOnMarkerDragListener(this);
-        //onMapLoaded();
         onMapReady(googleMap);
 
         setUpButtons();
+    }
+
+    @Override
+    public boolean onKeyUp(int keycode, KeyEvent e) {
+        switch(keycode) {
+            case KeyEvent.KEYCODE_MENU:
+                popUp();
+                return true;
+        }
+        //System.out.println(keycode);
+        //return true;
+        return super.onKeyUp(keycode, e);
+    }
+
+    private void popUp() {
+        LinearLayout layout = new LinearLayout(getBaseContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+
+        final TextView lltitle = new TextView(getBaseContext());
+        lltitle.setText("Lower Left Point");
+        final EditText llpoint = new EditText(getBaseContext());
+        layout.addView(lltitle);
+        layout.addView(llpoint);
+
+        final TextView trtitle = new TextView(getBaseContext());
+        trtitle.setText("Top Right Point");
+        final EditText trpoint = new EditText(getBaseContext());
+        layout.addView(trtitle);
+        layout.addView(trpoint);
+
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle("Manual Insert Area")
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        System.out.println(llpoint.getText());
+                        System.out.println(trpoint.getText());
+                        try {
+                            String[] llpointL = llpoint.getText().toString().split(",");
+                            String[] trpointL = trpoint.getText().toString().split(",");
+                            LatLng loc1 = new LatLng(Float.parseFloat(llpointL[0]), Float.parseFloat(llpointL[1]));
+                            LatLng loc2 = new LatLng(Float.parseFloat(trpointL[0]), Float.parseFloat(trpointL[1]));
+                            point1.setPosition(loc1);
+                            point2.setPosition(loc2);
+                            highlightArea();
+                        } catch (Exception fu) {
+                            System.out.println("Bad input");
+                        }
+
+                    }
+                });
+
+        alert.setView(layout);
+        alert.show();
     }
 
     private void setUpButtons() {
@@ -77,7 +138,6 @@ public class SelectArea extends Activity implements GoogleMap.OnInfoWindowClickL
 
         buttons.add(next);
         buttons.add(prev);
-
     }
 
     private void nextActivity() {
@@ -131,25 +191,21 @@ public class SelectArea extends Activity implements GoogleMap.OnInfoWindowClickL
         options.fillColor(Color.argb(155, 255, 0, 0));
 
         polygon = googleMap.addPolygon(options);
-
     }
 
     public boolean onMarkerClick(Marker arg0) {
         return true;
     }
 
-    public void onMarkerDrag(Marker marker)
-    {
+    public void onMarkerDrag(Marker marker) {
         highlightArea();
     }
 
-    public void onMarkerDragStart(Marker marker)
-    {
+    public void onMarkerDragStart(Marker marker) {
 
     }
 
-    public void onMarkerDragEnd(Marker marker)
-    {
+    public void onMarkerDragEnd(Marker marker) {
         highlightArea();
     }
 
