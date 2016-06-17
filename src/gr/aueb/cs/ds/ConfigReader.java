@@ -44,7 +44,7 @@ public class ConfigReader {
 							 Integer.parseInt(prop.getProperty("database_port", "3306")));
 			db_user = prop.getProperty("database_user", "omada13");
 			db_pass = prop.getProperty("database_password", "omada13db");
-			db_name = prop.getProperty("database_name", "ds_systems_2016");
+			db_name = prop.getProperty("database_name", "ds_systems_2016_omada13");
 			
 			String[] clientProp = prop.getProperty("client").split(":");
 			client = new Address(clientProp[0], Integer.parseInt(clientProp[1]));

@@ -73,6 +73,19 @@ public class DummyClient {
 		nextLine = in.nextLine();
 		String datetimeEnd = nextLine.isEmpty() ? "2022-01-01 00:00:00" : nextLine;   // Getting the ending datetime
 		
+		/* 
+		 * Database insert Test
+		 */
+//		ArrayList<String> msgData = new ArrayList<String>();
+//		msgData.add("40.757221298398356");
+//		msgData.add("-73.99154663085938");
+//		msgData.add("2012-01-01 00:00:00");
+//		msgData.add("http://i.imgur.com/CzpyQt6.jpg");
+//		Message msg = new Message(clientId, MessageType.INSERT, msgData);
+//    	NetworkHandler net = new NetworkHandler(conf.getReducer());
+//    	net.sendMessage(msg);
+//    	net.close();
+		
 		/*
 		 * Starting the search.
 		 */

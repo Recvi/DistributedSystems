@@ -17,6 +17,7 @@ import gr.aueb.cs.ds.network.Address;
 import gr.aueb.cs.ds.network.Message;
 import gr.aueb.cs.ds.network.Network;
 import gr.aueb.cs.ds.network.NetworkHandler;
+import gr.aueb.cs.ds.worker.database.Insert;
 import gr.aueb.cs.ds.worker.map.Checkin;
 import gr.aueb.cs.ds.worker.map.MapWorker;
 import gr.aueb.cs.ds.worker.reduce.ReduceWorker;
@@ -85,6 +86,12 @@ public class WorkerSpawner {
 					
 					net.sendMessage(new Message(msg.getClientId(), MessageType.ACK, new String("GOT DATA.")));
 					net.close();
+					break;
+				case INSERT:
+					System.out.println("Worker Spawner: Message is INSERT.");
+					Thread insert = new Insert(net, msg, conf);
+					threads.add(insert);
+					insert.start();
 					break;
 				}
 			}

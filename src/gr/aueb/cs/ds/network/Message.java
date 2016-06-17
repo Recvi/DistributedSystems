@@ -10,7 +10,8 @@ public class Message implements Serializable {
     	REDUCE,        // Start Reducing
     	MAPPER_DATA,   // Mapper sends data to Reducer
     	ACK,           // Acknowledgement: Done or everything okay
-    	ERROR          // Something went wrong
+    	ERROR,         // Something went wrong
+    	INSERT         // Insert Checkin to database
 	}
 
 	private static final long serialVersionUID = 7817450821242935569L;
