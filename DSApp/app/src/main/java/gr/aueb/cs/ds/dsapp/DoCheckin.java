@@ -20,9 +20,6 @@ import android.support.v4.app.ActivityCompat;
 import android.util.Base64;
 import android.widget.ImageView;
 
-import com.google.android.gms.maps.model.LatLng;
-
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -34,11 +31,16 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Calendar;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import gr.aueb.cs.ds.network.Message;
+import gr.aueb.cs.ds.network.NetworkHandler;
+import gr.aueb.cs.ds.network.Network;
 public class DoCheckin extends Activity {
-
+    Context context;
     ImageView image;
     String imgurKey;
 
@@ -46,34 +48,42 @@ public class DoCheckin extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_do_checkin);
+        context = getBaseContext();
 
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
         imgurKey = SP.getString("imgurkey", "");
 
         image = (ImageView) findViewById(R.id.taken_image);
         dispatchTakePictureIntent();
+       // postNewCheckin("http://i.imgur.com/1tQJ9cp.jpg", null);
     }
+
 
     private void postNewCheckin(String url, Location loc) {
         System.out.println("New Checkin Start ###########");
 
         System.out.println("IMG URL: " + url);
+        String latitude = "40.757221298398356";
+        String getLongitude = "-73.99154663085938";
         if (loc != null) {
-            System.out.println("Latitude: " + loc.getLatitude());
-            System.out.println("Longitude: " + loc.getLongitude());
+            latitude = loc.getLatitude() + "";
+            getLongitude = loc.getLongitude() + "";
         }
+        System.out.println("Latitude: " + latitude);
+        System.out.println("Longitude: " + getLongitude);
+
+        Calendar c = Calendar.getInstance();
+        String time = "2012-01-01 00:22:00";
+
+        ArrayList<String> msgData = new ArrayList<String>();
+        msgData.add(latitude);
+        msgData.add(getLongitude);
+        msgData.add(time);
+        msgData.add(url);
+
+        new InsertImageTask(msgData).execute();
 
         System.out.println("New Checkin End ###########");
-
-        new AlertDialog.Builder(this)
-                .setTitle("Success!")
-                .setMessage("You successefuly posted a new Checkin, Thank you!")
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        finish();
-                    }
-                })
-                .show();
     }
 
     @Nullable
@@ -85,6 +95,7 @@ public class DoCheckin extends Activity {
         Location loc = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         return loc;
     }
+
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
@@ -105,6 +116,49 @@ public class DoCheckin extends Activity {
             finish();
         }
     }
+
+    private void myFinish(boolean response) {
+        if (response) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Success!")
+                    .setMessage("You successefuly posted a new Checkin, Thank you!")
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            finish();
+                        }
+                    })
+                    .show();
+        } else {
+            System.out.println("You are a disgrace to your family!");
+            finish();
+        }
+    }
+
+    private class InsertImageTask extends AsyncTask<Void , Void, Boolean> {
+
+        ArrayList<String> msgData;
+
+        public InsertImageTask(ArrayList<String> msgData) {
+            this.msgData = msgData;
+        }
+
+        protected Boolean doInBackground(Void... nothing) {
+            try {
+                Message msg = new Message("Insert", Message.MessageType.INSERT, msgData);
+                NetworkHandler net = new NetworkHandler(new Config(getBaseContext()).getReducer());
+                net.sendMessage(msg);
+                net.close();
+            } catch (Exception fu) {
+                return false;
+            }
+            return true;
+        }
+
+        protected void onPostExecute(Boolean response) {
+           myFinish(response);
+        }
+    }
+
 
 
     private class UploadImageTask extends AsyncTask<Bitmap , Void, String> {

@@ -2,19 +2,13 @@ package gr.aueb.cs.ds.dsapp;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 
 import java.util.ArrayList;
 import gr.aueb.cs.ds.dsapp.getpoi.SelectArea;
 
-
-// Main Activity, for now goes directly to getPoiz activity
 public class MainActivity extends Activity {
 
     ArrayList<Button> buttons;
@@ -57,7 +51,6 @@ public class MainActivity extends Activity {
     }
 
     private void goToActivity(Class target) {
-        System.out.print("\n\n\n\n\n\n\n\nyolo\n\n\n\n\n\n");
         Intent intent = new Intent(this, target);
         startActivity(intent);
     }
