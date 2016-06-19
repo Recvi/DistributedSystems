@@ -1,6 +1,8 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory
-        android:title="Servers">
+        android:title="Servers"
+        android:textSize="291px"
+        >
     <EditTextPreference
         android:capitalize="words"
         android:inputType="textCapWords"

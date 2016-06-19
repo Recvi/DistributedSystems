@@ -16,7 +16,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Get POI"
+            android:text="Select Time Period"
             android:textSize="20dp"
             android:textColor="#000"
             android:gravity="center"/>
@@ -30,16 +30,50 @@
         android:background="#ffffff"
         android:orientation="vertical"
         android:id="@+id/date_pick_area">
-        <Button
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:id="@+id/pick_low_date"/>
-        <Button
+            android:background="#ffffff"
+            >
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="From :"
+                android:gravity="center"
+                android:textSize="20dp"/>
+            <Button
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:id="@+id/pick_low_date"
+                android:textSize="20dp"
+                android:layout_marginTop="40dp"
+                android:layout_marginBottom="40dp"/>
+        </LinearLayout>
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:id="@+id/pick_high_date"/>
+            android:background="#ffffff"
+            >
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="To :"
+                android:gravity="center"
+                android:textSize="20dp"/>
+            <Button
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:id="@+id/pick_high_date"
+                android:textSize="20dp"
+                android:layout_marginTop="40dp"
+                android:layout_marginBottom="40dp"/>
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
@@ -54,7 +88,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:id="@+id/cancel_button2"
-            android:text="Cancel"/>
+            android:text="Back"/>
         <Button
             android:layout_width="0dp"
             android:layout_height="match_parent"

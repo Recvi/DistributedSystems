@@ -8,12 +8,14 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="gr.aueb.cs.ds.dsapp.DoCheckin">
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Sending Image Please Wait.........."/>
+    <ProgressBar
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:indeterminate="true"
+        android:id="@+id/progress_bar1"
+        android:translationZ="10dp"/>
 <ImageView
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:id="@+id/taken_image"/>
 </RelativeLayout>

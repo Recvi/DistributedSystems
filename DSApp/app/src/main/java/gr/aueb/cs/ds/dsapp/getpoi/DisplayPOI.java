@@ -61,7 +61,6 @@ public class DisplayPOI extends Activity {
         imageBox.setImageBitmap(imageUrl);
         imageBox.setAdjustViewBounds(true);
         //imageBox.getLayoutParams().height = 20;
-      //  ScrollView.
        //// ScrollView.LayoutParams layoutParams = new LinearLayout.LayoutParams(30, 30);
       //  imageBox.setLayoutParams(layoutParams);
         row.addView(imageBox);
