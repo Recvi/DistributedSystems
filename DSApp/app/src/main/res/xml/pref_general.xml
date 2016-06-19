@@ -37,6 +37,25 @@
         android:title="Reducer" />
     </PreferenceCategory>
     <PreferenceCategory
+        android:title="Fake GEO-Location">
+        <EditTextPreference
+            android:capitalize="words"
+            android:inputType="textCapWords"
+            android:key="fgla"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="Latitude" />
+        <EditTextPreference
+            android:capitalize="words"
+            android:inputType="textCapWords"
+            android:key="fglo"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="Longitude" />
+    </PreferenceCategory>
+    <PreferenceCategory
         android:title="Default Selected Area">
         <EditTextPreference
             android:capitalize="words"

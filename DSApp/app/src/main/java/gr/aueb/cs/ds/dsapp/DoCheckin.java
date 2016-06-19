@@ -63,15 +63,21 @@ public class DoCheckin extends Activity {
     private void postNewCheckin(String url, Location loc) {
         System.out.println("New Checkin Start ###########");
 
+        SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(context);
+        String mapper1Address = SP.getString("mapper1", "10.0.2.2:4322");
+
         System.out.println("IMG URL: " + url);
         String latitude = "40.757221298398356";
-        String getLongitude = "-73.99154663085938";
+        String longitude = "-73.99154663085938";
         if (loc != null) {
             latitude = loc.getLatitude() + "";
-            getLongitude = loc.getLongitude() + "";
+            longitude = loc.getLongitude() + "";
         }
+
+        latitude = SP.getString("fgla", latitude);
+        longitude = SP.getString("fglo", longitude);
         System.out.println("Latitude: " + latitude);
-        System.out.println("Longitude: " + getLongitude);
+        System.out.println("Longitude: " + longitude);
 
         Calendar c = Calendar.getInstance();
         Date date = c.getTime();
@@ -81,7 +87,7 @@ public class DoCheckin extends Activity {
 
         ArrayList<String> msgData = new ArrayList<String>();
         msgData.add(latitude);
-        msgData.add(getLongitude);
+        msgData.add(longitude);
         msgData.add(time);
         msgData.add(url);
 
