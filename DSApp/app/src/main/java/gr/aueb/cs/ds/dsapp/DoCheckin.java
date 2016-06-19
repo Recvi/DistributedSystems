@@ -33,6 +33,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -73,7 +74,10 @@ public class DoCheckin extends Activity {
         System.out.println("Longitude: " + getLongitude);
 
         Calendar c = Calendar.getInstance();
+        Date date = c.getTime();
         String time = "2012-01-01 00:22:00";
+        time = (date.getYear() + 1900) + "-" + (date.getMonth() + 1) + "-" + date.getDate()
+                + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
 
         ArrayList<String> msgData = new ArrayList<String>();
         msgData.add(latitude);
@@ -121,7 +125,7 @@ public class DoCheckin extends Activity {
         if (response) {
             new AlertDialog.Builder(this)
                     .setTitle("Success!")
-                    .setMessage("You successefuly posted a new Checkin, Thank you!")
+                    .setMessage("You successfully posted a new Checkin, Thank you!")
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
                             finish();
