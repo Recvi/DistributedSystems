@@ -15,16 +15,11 @@ public class Address {
         this.port = port;
     }
 
-    public Address(String addr) {
-        String[] add = addr.split(':');
-        if (add.length == 2) {
-            this.ip = add[0];
-            this.port = add[1];
-        } else {
-            this.ip = null;
-            this.port = null;
-        }
-    }
+    public Address(String ipWithPort) {
+		String[] temp = ipWithPort.split(":");
+		this.ip = temp[0];
+		this.port = Integer.parseInt(temp[1]);
+	}
 
     public String getIp() {
 		return ip;

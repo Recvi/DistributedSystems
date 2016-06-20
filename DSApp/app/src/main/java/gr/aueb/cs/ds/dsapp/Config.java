@@ -17,8 +17,8 @@ public class Config {
 
         //  Get the servers addresses, make the first reducer and the others mappers.
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(context);
-        String ser = SP.getString("servers");
-        servers = ser.split(',');
+        String ser = SP.getString("servers", "10.0.2.2:4322,10.0.2.2:4323,10.0.2.2:4324,10.0.2.2:4325");
+        servers = ser.split(",");
 
         reducer = new Address(servers[0]);
 
@@ -28,6 +28,7 @@ public class Config {
         for (int i=1; i<servers.length; i++) {
             mappers.add(new Address(servers[i]));
         }
+
     }
 
     public Address getReducer() {
@@ -40,10 +41,11 @@ public class Config {
 
     public Address getAvailableServer(Address down) {
         for (int i=0; i<servers.length; i++) {
-            if (!servers[i].equals(down.getAddress())) {
-                return new Address(servers[i]);
-            }
+           // if (!servers[i].equals(down.getAddress())) {
+            //    return new Address(servers[i]);
+            //}
         }
+        return null;
     }
 
 }

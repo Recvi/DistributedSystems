@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import gr.aueb.cs.ds.ConfigReader;
 import gr.aueb.cs.ds.network.Address;
@@ -31,6 +32,20 @@ public class WorkerSpawner {
 		Map<String, ArrayList<ArrayList<Checkin>>> mapper_data = new HashMap<String, ArrayList<ArrayList<Checkin>>>();
 
 		ConfigReader conf = new ConfigReader();
+		
+		Scanner in = new Scanner(System.in);
+		String nextLine;
+
+		System.out.println("Give me address:ip i should listen to.");
+		nextLine = in.nextLine();
+		Address addr;
+		try {
+			addr = new Address(nextLine);
+		} catch (Exception fu) {
+			System.out.println("Nope. Wrong address formar");
+			return;
+		}
+			/*
 		Address addr = null;
 		if (args[0].equals("REDUCE")) {
 			addr = conf.getReducer();
@@ -38,7 +53,7 @@ public class WorkerSpawner {
 		} else if (args[0].equals("MAP")){
 			addr = conf.getMappers().get(Integer.parseInt(args[1]));
 			System.out.println("Worker Spawner: " + args[0] + " " + args[1]);
-		}
+		}*/
 
 
 		try {
@@ -62,7 +77,10 @@ public class WorkerSpawner {
 				case MAP:
 
 					System.out.println("Worker Spawner: Message is MAP.");
-					conf.setReducer(new Address(msg.getData().get(6)));
+					Address reducer = new Address(((ArrayList<String>)msg.getData()).get(6));
+					System.out.println("ASd");
+					System.out.println(reducer.getIp() + ":" + reducer.getPort());
+					conf.setReducer(reducer);
 					Thread map = new MapWorker(net, msg, conf);
 					threads.add(map);
 					map.start();

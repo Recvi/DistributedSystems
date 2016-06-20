@@ -173,7 +173,7 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
                 data.add(trpoint[1]);
                 data.add(datetimeStart);
                 data.add(datetimeEnd);
-                data.add(conf.getReducer());
+                data.add(conf.getReducer().toString());
 
                 lowerLeftLat += latStep;
                 topRightLat += latStep;

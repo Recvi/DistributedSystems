@@ -37,7 +37,7 @@ public class Address {
 		this.port = port;
 	}
 
-    public String getAdress() {
-        return this.ip+this.port;
+    public String toString() {
+        return this.ip + ":" + this.port;
     }
 }
