@@ -155,7 +155,7 @@ public class DoCheckin extends Activity {
         protected Boolean doInBackground(Void... nothing) {
             try {
                 Message msg = new Message("Insert", Message.MessageType.INSERT, msgData);
-                NetworkHandler net = new NetworkHandler(new Config(getBaseContext()).getReducer());
+                NetworkHandler net = new NetworkHandler(new Config(getBaseContext()).getServer());
                 net.sendMessage(msg);
                 net.close();
             } catch (Exception fu) {
