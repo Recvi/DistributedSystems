@@ -49,6 +49,7 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
     private String clientId;
     Thread[] threads;
     private Config conf;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -134,7 +135,6 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
 
     private class getPois extends AsyncTask<String, String, String> {
 
-       // ArrayList<Checkin> checkins = new ArrayList<Checkin>();
         private boolean done = false;
         Address reducer;
 
@@ -148,7 +148,7 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
                     }
                 }
                 if (outOfAddresses) {
-                    Log.d("ERROR69", "bgika");
+                    Log.d("ERROR69", "I am inside while(distributeToMapper) and outOfAddresses is true.");
                     return "oufOfAddresses";
                 }
             }
@@ -190,8 +190,9 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
 
         boolean restartdistributeToMappers = false;
         boolean outOfAddresses = false;
+
         private boolean distributeToMappers(String[] llpoint, String[] trpoint, String datetimeStart, String datetimeEnd, int parts) {
-            Log.d("ERROR69", "mpika");
+            Log.d("ERROR69", "I start a new distribution.");
             double lowerLeftLat = Double.parseDouble(llpoint[0]);
             double topRightLat = Double.parseDouble(trpoint[0]);
             double latDiff = topRightLat - lowerLeftLat;
@@ -204,11 +205,13 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
             pendingRequests = parts;
             conf.resetUsedServers();
             reducer = conf.getServer();
-            Log.d("ERROR69","reducer" + reducer.toString());
+
 
             if (reducer == null) {
                 outofAddresses();
+                return true;
             }
+            Log.d("ERROR69", "My recuer is" + reducer.toString());
             for (int i = 0; i < parts; i++) {
                 ArrayList<String> data = new ArrayList<String>();
                 data.add(Double.toString(lowerLeftLat));
@@ -233,17 +236,18 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
                 threads[i] = new Thread() {
                     public void run() {
                         boolean repeat = true;
+                        Log.d("ERROR69","Herrow!, i am a new map thread");
                         ArrayList<String> data = getNextData();
                         while (repeat) {
                             repeat = false;
-                            Log.d("ERROR69","v2");
+                            Log.d("ERROR69","Getting a new mapper address");
                             Address mapperAddress = conf.getServer();
-//                            Log.d("ERROR69", mapperAddress.toString());
                             if (mapperAddress == null){
-                                Log.d("ERROR69","asss2sd");
+                                Log.d("ERROR69","Can't get a mapper address, out of addresses.");
                                 outofAddresses();
                                 break;
                             }
+                            Log.d("ERROR69","Got ." + mapperAddress.toString() + "as mapper address.");
                             try {
                                 Message msg = new Message(clientId, Message.MessageType.MAP, data);
                                 NetworkHandler net = new NetworkHandler(mapperAddress);
@@ -257,11 +261,11 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
                                 }
                                 waitForMappers(mapperAddress);
                             } catch (Exception dealWithIt) {
-                                Log.d("ERROR69","ff");
+                                Log.d("ERROR69","Can't contact mapper: " + mapperAddress.toString());
+                                messageMainThread("Can't contact mapper: " + mapperAddress.toString());
                                 dealWithIt.printStackTrace();
                                 repeat = true;
                                 conf.removeServerFromOnline(mapperAddress);
-                                messageMainThread("Lost mapper");
                             }
                         }
 
@@ -282,15 +286,10 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
             return true;
         }
 
-        private synchronized Address getNextMapperAddress() {
-           // Address addr = mapperAddresses.remove(0);
-           // System.out.println("\tClient thread: Sending to " + addr.getIp() + ":" + addr.getPort());
-            return null;
-        }
-
         private synchronized ArrayList<String> getNextData() {
             return mappersData.remove(0);
         }
+
         private synchronized void waitForMappers(Address addr) {
             pendingRequests--;
             System.out.println("\tClient thread: Mapper at " + addr.getIp() + ":" + addr.getPort()+ " is DONE.");

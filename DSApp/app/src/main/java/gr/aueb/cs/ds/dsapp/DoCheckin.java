@@ -18,6 +18,7 @@ import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.util.Base64;
+import android.util.Log;
 import android.widget.ImageView;
 
 import org.json.JSONException;
@@ -56,7 +57,6 @@ public class DoCheckin extends Activity {
 
         image = (ImageView) findViewById(R.id.taken_image);
         dispatchTakePictureIntent();
-       // postNewCheckin("http://i.imgur.com/1tQJ9cp.jpg", null);
     }
 
 
@@ -123,6 +123,7 @@ public class DoCheckin extends Activity {
             new UploadImageTask(imgurKey).execute(imageBitmap);
         } else {
             System.out.println("You are a disgrace to your family!");
+            Log.d("ERROR69:", "Camera Failed.");
             finish();
         }
     }
@@ -159,6 +160,7 @@ public class DoCheckin extends Activity {
                 net.sendMessage(msg);
                 net.close();
             } catch (Exception fu) {
+                Log.d("ERROR69:", "Sending pic to server Failed.");
                 return false;
             }
             return true;
@@ -218,7 +220,7 @@ public class DoCheckin extends Activity {
 
         protected void onPostExecute(String response) {
             if (response.equals("false")) {
-                System.out.println("You are a disgrace to your family!");
+                Log.d("ERROR69:", "IMGUR Failed.");
                 finish();
             } else {
                 try {
@@ -227,7 +229,7 @@ public class DoCheckin extends Activity {
                     //System.out.println(parent.getString("link"));
                     postNewCheckin(parent.getString("link"), getLoc());
                 } catch (JSONException e) {
-                    System.out.println("You are a disgrace to your family!");
+                    Log.d("ERROR69:", "IMGUR failed.");
                     e.printStackTrace();
                     finish();
                 }

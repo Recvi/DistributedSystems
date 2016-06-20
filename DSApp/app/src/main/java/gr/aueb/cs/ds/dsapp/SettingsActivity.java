@@ -30,9 +30,7 @@ public class SettingsActivity extends PreferenceActivity{
 
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key){
-            System.out.println(sharedPreferences.getString(key,"none"));
-            Preference pref = findPreference(key);
-            pref.setSummary(sharedPreferences.getString(key,""));
+
         }
 
     }
