@@ -1,41 +1,12 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory
-        android:title="Servers"
-        android:textSize="291px"
-        >
     <EditTextPreference
         android:capitalize="words"
         android:inputType="textCapWords"
-        android:key="mapper1"
+        android:key="servers"
         android:maxLines="1"
         android:selectAllOnFocus="true"
         android:singleLine="true"
-        android:title="Mapper1" />
-    <EditTextPreference
-        android:capitalize="words"
-        android:inputType="textCapWords"
-        android:key="mapper2"
-        android:maxLines="1"
-        android:selectAllOnFocus="true"
-        android:singleLine="true"
-        android:title="Mapper2" />
-    <EditTextPreference
-        android:capitalize="words"
-        android:inputType="textCapWords"
-        android:key="mapper3"
-        android:maxLines="1"
-        android:selectAllOnFocus="true"
-        android:singleLine="true"
-        android:title="Mapper3" />
-    <EditTextPreference
-        android:capitalize="words"
-        android:inputType="textCapWords"
-        android:key="reducer"
-        android:maxLines="1"
-        android:selectAllOnFocus="true"
-        android:singleLine="true"
-        android:title="Reducer" />
-    </PreferenceCategory>
+        android:title="Server" />
     <PreferenceCategory
         android:title="Fake GEO-Location">
         <EditTextPreference
