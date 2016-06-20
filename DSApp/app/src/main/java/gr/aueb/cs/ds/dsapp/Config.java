@@ -11,25 +11,23 @@ import gr.aueb.cs.ds.network.Address;
 public class Config {
     private ArrayList<Address> mappers;
     private Address reducer;
+    private String[] servers;
 
     public  Config(Context context) {
 
+        //  Get the servers addresses, make the first reducer and the others mappers.
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(context);
-        String mapper1Address = SP.getString("mapper1", "10.0.2.2:4322");
-        String mapper2Address = SP.getString("mapper2", "10.0.2.2:4323");
-        String mapper3Address = SP.getString("mapper3", "10.0.2.2:4324");
-        String reducerAddress = SP.getString("reducer", "10.0.2.2:4325");
+        String ser = SP.getString("servers");
+        servers = ser.split(',');
 
-        System.out.println(mapper1Address);
-        System.out.println(mapper2Address);
-        System.out.println(mapper3Address);
-        System.out.println(reducerAddress);
+        reducer = new Address(servers[0]);
+
+
 
         mappers = new ArrayList<Address>();
-        mappers.add(new Address(mapper1Address));
-        mappers.add(new Address(mapper2Address));
-        mappers.add(new Address(mapper3Address));
-        reducer = new Address(reducerAddress);
+        for (int i=1; i<servers.length; i++) {
+            mappers.add(new Address(servers[i]));
+        }
     }
 
     public Address getReducer() {
@@ -38,6 +36,14 @@ public class Config {
 
     public ArrayList<Address> getMappers() {
         return mappers;
+    }
+
+    public Address getAvailableServer(Address down) {
+        for (int i=0; i<servers.length; i++) {
+            if (!servers[i].equals(down.getAddress())) {
+                return new Address(servers[i]);
+            }
+        }
     }
 
 }
