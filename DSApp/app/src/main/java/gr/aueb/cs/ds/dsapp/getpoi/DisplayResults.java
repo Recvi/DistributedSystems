@@ -1,9 +1,12 @@
 package gr.aueb.cs.ds.dsapp.getpoi;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.widget.Button;
@@ -39,11 +42,12 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
     String datetimeStart;
     String datetimeEnd;
 
-    private Map<Address, ArrayList<String>> mappersData;
-    private ArrayList<Address> mapperAddresses;
+    private ArrayList<ArrayList<String>> mappersData;
+   // private ArrayList<Address> mapperAddresses;
     private int pendingRequests;
+    private int parts;
     private String clientId;
-
+    Thread[] threads;
     private Config conf;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,10 +55,7 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
         setContentView(R.layout.activity_display_results);
 
         this.conf = new Config(getBaseContext());
-        this.mappersData = new HashMap<Address, ArrayList<String>>();
-        this.mapperAddresses = conf.getMappers();
-        this.pendingRequests = mapperAddresses.size();
-        this.clientId = UUID.randomUUID().toString();
+        this.parts = conf.getParts();
 
         Button next = (Button) findViewById(R.id.go_back2);
         next.setOnClickListener(new View.OnClickListener() {
@@ -137,7 +138,15 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
         private boolean done = false;
 
         protected String doInBackground(String... strings) {
-            distributeToMappers(llpoint, trpoint, datetimeStart, datetimeEnd);
+            boolean repeat = false;
+            while(repeat){
+                repeat = !distributeToMappers(llpoint, trpoint, datetimeStart, datetimeEnd, parts);
+                for (int i = 0; i<parts; i++) {
+                    if (threads[i] != null){
+                        threads[i].stop();
+                    }
+                }
+            }
             while (!done) {
                 try {
                     Thread.sleep(1000);
@@ -156,16 +165,25 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
             findViewById(R.id.progress_bar1).setVisibility(View.GONE);
         }
 
-        private void distributeToMappers(String[] llpoint, String[] trpoint, String datetimeStart, String datetimeEnd) {
+        boolean restartdistributeToMappers = false;
+        private boolean distributeToMappers(String[] llpoint, String[] trpoint, String datetimeStart, String datetimeEnd, int parts) {
 
             double lowerLeftLat = Double.parseDouble(llpoint[0]);
             double topRightLat = Double.parseDouble(trpoint[0]);
             double latDiff = topRightLat - lowerLeftLat;
-            double latStep = latDiff / mapperAddresses.size();
+            double latStep = latDiff / parts;
 
             topRightLat = lowerLeftLat + latStep;   // reinitialize for first mapper.
 
-            for (Address addr : mapperAddresses) {
+            clientId = UUID.randomUUID().toString();
+            mappersData = new ArrayList<ArrayList<String>>();
+            pendingRequests = parts;
+            conf.resetUsedServers();
+            Address reducer = conf.getServer();
+            if (reducer == null) {
+                // Out of addresses
+            }
+            for (int i = 0; i < parts; i++) {
                 ArrayList<String> data = new ArrayList<String>();
                 data.add(Double.toString(lowerLeftLat));
                 data.add(llpoint[1]);
@@ -178,33 +196,69 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
                 lowerLeftLat += latStep;
                 topRightLat += latStep;
 
-                mappersData.put(addr, data);
+                mappersData.add(data);
             }
 
             System.out.println("Distributing to mappers with clientId: " + clientId);
 
-            int mappers_num = mapperAddresses.size();
+            int mappers_num = parts;
+            threads = new Thread[parts];
             for (int i=0; i<mappers_num; i++) {
-                new Thread() {
+                threads[i] = new Thread() {
                     public void run() {
-                        Address mapperAddress = getNextMapperAddress();
-                        Message msg = new Message(clientId, Message.MessageType.MAP, mappersData.get(mapperAddress));
-                        NetworkHandler net = new NetworkHandler(mapperAddress);
-                        net.sendMessage(msg);
-                        Message reply = net.readMessage();
-                        net.close();
-                        waitForMappers(mapperAddress);
+                        boolean repeat = true;
+                        ArrayList<String> data = getNextData();
+                        while (repeat) {
+                            repeat = false;
+                            Address mapperAddress = conf.getServer();
+                            if (mapperAddress == null){
+                                // Out of addresses
+                            }
+                            try {
+                                Message msg = new Message(clientId, Message.MessageType.MAP, data);
+                                NetworkHandler net = new NetworkHandler(mapperAddress);
+                                net.sendMessage(msg);
+                                Message reply = net.readMessage();
+                                net.close();
+                                if (reply.getMsgType() == Message.MessageType.ERROR) {
+                                    conf.removeServerFromOnline(new Address(data.get(6)));
+                                    restartdistributeToMappers = true;
+                                    return;
+                                }
+                                waitForMappers(mapperAddress);
+                            } catch (Exception dealWithIt) {
+                                repeat = true;
+                                conf.removeServerFromOnline(mapperAddress);
+                                messageMainThread("Lost mapper");
+                            }
+                        }
+
                     }
-                }.start();
+                };
+                threads[i].start();
             }
+            for (int i = 0 ; i < parts; i++){
+                try {
+                    threads[i].join();
+                    if (restartdistributeToMappers) {
+                        return false;
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            return true;
         }
 
         private synchronized Address getNextMapperAddress() {
-            Address addr = mapperAddresses.remove(0);
-            System.out.println("\tClient thread: Sending to " + addr.getIp() + ":" + addr.getPort());
-            return addr;
+           // Address addr = mapperAddresses.remove(0);
+           // System.out.println("\tClient thread: Sending to " + addr.getIp() + ":" + addr.getPort());
+            return null;
         }
 
+        private synchronized ArrayList<String> getNextData() {
+            return mappersData.remove(0);
+        }
         private synchronized void waitForMappers(Address addr) {
             pendingRequests--;
             System.out.println("\tClient thread: Mapper at " + addr.getIp() + ":" + addr.getPort()+ " is DONE.");
@@ -234,6 +288,35 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
             }
             done = true;
 
+        }
+
+        private void messageMainThread(String message) {
+            Log.d("Error69:", message);
+            final String msg = message;
+            DisplayResults.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(DisplayResults.this, msg, Toast.LENGTH_LONG);
+                }
+            });
+        }
+        private void outofAddresses(String message) {
+            Log.d("Error69:", message);
+            final String msg = message;
+            DisplayResults.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    new AlertDialog.Builder(DisplayResults.this)
+                            .setTitle("Out Of Addresses")
+                            .setMessage("Not enough available servers, to serve your request. Check servers, settings and try again.")
+                            .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    System.exit(0);
+                                }
+                            })
+                            .show();
+                }
+            });
         }
     }
 

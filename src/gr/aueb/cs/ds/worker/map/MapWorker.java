@@ -70,7 +70,13 @@ public class MapWorker extends Thread {
     	 * Send intermediate data to reducer.
     	 */ 
     	System.out.println("\tMapper: Sending data to REDUCER.");
-        sendToReducer(results);
+        boolean reducerStatus = true;
+    	try{
+    		sendToReducer(results);
+    	} catch (Exception dealWithIt) {
+    		System.out.println("\tReducer is down..");
+    		reducerStatus = false;
+    	}
     	
         
         
@@ -78,7 +84,7 @@ public class MapWorker extends Thread {
     	 * Notify client that the work is completed.
     	 */
         System.out.println("\tMapper: notifying Master.");
-        notifyMaster();
+        notifyMaster(reducerStatus);
     	
     }
 
@@ -175,9 +181,13 @@ public class MapWorker extends Thread {
     /*
      * Notifies client that called for MAP that the job is done.
      */
-    private void notifyMaster() {
+    private void notifyMaster(boolean reducerStatus) {
 //        return Network.sendRequest(con, new Message(msg.getClientId(), MessageType.ACK, new String("DONE.")), conf.getClient());
-    	net.sendMessage(new Message(msg.getClientId(), MessageType.ACK, new String("DONE.")));
+    	if (reducerStatus) {
+        	net.sendMessage(new Message(msg.getClientId(), MessageType.ACK, new String("DONE.")));
+    	} else {
+        	net.sendMessage(new Message(msg.getClientId(), MessageType.ERROR, new String("Reducer Down.")));
+    	}
     	net.close();
     }
     

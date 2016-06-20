@@ -7,6 +7,22 @@
         android:selectAllOnFocus="true"
         android:singleLine="true"
         android:title="Server" />
+    <EditTextPreference
+        android:capitalize="words"
+        android:inputType="textCapWords"
+        android:key="maxThreadsPerServer"
+        android:maxLines="1"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:title="Max Threads per Server" />
+    <EditTextPreference
+        android:capitalize="words"
+        android:inputType="textCapWords"
+        android:key="numberOfParts"
+        android:maxLines="1"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:title="Number Of Parts to Split Map" />
     <PreferenceCategory
         android:title="Fake GEO-Location">
         <EditTextPreference

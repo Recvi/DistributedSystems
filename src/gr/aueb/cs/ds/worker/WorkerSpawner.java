@@ -45,15 +45,7 @@ public class WorkerSpawner {
 			System.out.println("Nope. Wrong address formar");
 			return;
 		}
-			/*
-		Address addr = null;
-		if (args[0].equals("REDUCE")) {
-			addr = conf.getReducer();
-			System.out.println("Worker Spawner: REDUCE");
-		} else if (args[0].equals("MAP")){
-			addr = conf.getMappers().get(Integer.parseInt(args[1]));
-			System.out.println("Worker Spawner: " + args[0] + " " + args[1]);
-		}*/
+		System.out.println("Thank you.");
 
 
 		try {
@@ -78,8 +70,6 @@ public class WorkerSpawner {
 
 					System.out.println("Worker Spawner: Message is MAP.");
 					Address reducer = new Address(((ArrayList<String>)msg.getData()).get(6));
-					System.out.println("ASd");
-					System.out.println(reducer.getIp() + ":" + reducer.getPort());
 					conf.setReducer(reducer);
 					Thread map = new MapWorker(net, msg, conf);
 					threads.add(map);
