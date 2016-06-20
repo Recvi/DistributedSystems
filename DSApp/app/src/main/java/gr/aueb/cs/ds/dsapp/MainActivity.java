@@ -23,13 +23,6 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         setUpButtons();
-
-        Calendar c = Calendar.getInstance();
-        Date date = c.getTime();
-        System.out.println(date);
-        String time = "2012-01-01 00:22:00";
-        String mytime = (date.getYear() + 1900) + "-" + (date.getMonth() + 1) + "-" + date.getDate()
-                + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
     }
 
     private void setUpButtons() {

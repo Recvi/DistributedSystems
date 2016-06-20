@@ -3,6 +3,8 @@ package gr.aueb.cs.ds.dsapp;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.util.Log;
+
 import java.util.ArrayList;
 
 import gr.aueb.cs.ds.network.Address;
@@ -38,29 +40,14 @@ public class Config {
         resetfreeServers();
     }
 
-    public Address getReducer() {
-        return getServer();
-    }
-
-    public ArrayList<Address> getMappers() {
-        ArrayList<Address> mappers = new ArrayList<>();
-        for (int i = 0; i < mapParts; i++) {
-            Address mapper = getServer();
-            if (mapper == null) {
-                return null;
-            }
-            mappers.add(mapper);
-        }
-        return mappers;
-    }
-
-
     public synchronized Address getServer() {
         if (freeServers.size() > 0) {
-            return freeServers.remove(0);
+            Address address = freeServers.remove(0);
+            Log.d("ERROR69","got" + address.toString());
+            return address;
         }
 
-        if ((onlineServers.size() > 0) && (threadsPerServerRemaining < 1)) {
+        if ((onlineServers.size() > 0) && (threadsPerServerRemaining >= 1)) {
             resetfreeServers();
             return freeServers.remove(0);
         }
@@ -75,22 +62,27 @@ public class Config {
     }
 
     private void resetfreeServers() {
+       ;
         threadsPerServerRemaining--;
         freeServers = new ArrayList<Address>();
         for (int i=0; i<onlineServers.size(); i++) {
             freeServers.add(onlineServers.get(i));
         }
     }
+
     public void resetUsedServers() {
         threadsPerServerRemaining = maxThreadsPerServer;
         resetfreeServers();
     }
+
     public int getParts(){
         return mapParts;
     }
 
     public void removeServerFromOnline(Address address) {
+        Log.d("ERROR69:", "FAILED" + address.toString());
         onlineServers.remove(address);
+
     }
 
 }

@@ -136,15 +136,20 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
 
        // ArrayList<Checkin> checkins = new ArrayList<Checkin>();
         private boolean done = false;
+        Address reducer;
 
         protected String doInBackground(String... strings) {
-            boolean repeat = false;
+            boolean repeat = true;
             while(repeat){
                 repeat = !distributeToMappers(llpoint, trpoint, datetimeStart, datetimeEnd, parts);
                 for (int i = 0; i<parts; i++) {
                     if (threads[i] != null){
-                        threads[i].stop();
+                        threads[i].interrupt();
                     }
+                }
+                if (outOfAddresses) {
+                    Log.d("ERROR69", "bgika");
+                    return "oufOfAddresses";
                 }
             }
             while (!done) {
@@ -158,6 +163,24 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
         }
 
         protected void onPostExecute(String result) {
+            if (result.equals("oufOfAddresses")) {
+                new AlertDialog.Builder(DisplayResults.this)
+                        .setTitle("Out Of Addresses")
+                        .setMessage("Not enough available servers, to serve your request. Check servers, settings and try again.")
+                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                finish();
+                            }
+                        })
+                        .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                            @Override
+                            public void onDismiss(DialogInterface dialogInterface) {
+                                finish();
+                            }
+                        })
+                        .show();
+                //System.exit(0);
+            }
             for (int i=0; i<checkins.size(); i++) {
                 LatLng pos = new LatLng(checkins.get(i).getLatitude(), checkins.get(i).getLongitude());
                 googleMap.addMarker(new MarkerOptions().position(pos).title(checkins.get(i).getPOI_name()));
@@ -166,8 +189,9 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
         }
 
         boolean restartdistributeToMappers = false;
+        boolean outOfAddresses = false;
         private boolean distributeToMappers(String[] llpoint, String[] trpoint, String datetimeStart, String datetimeEnd, int parts) {
-
+            Log.d("ERROR69", "mpika");
             double lowerLeftLat = Double.parseDouble(llpoint[0]);
             double topRightLat = Double.parseDouble(trpoint[0]);
             double latDiff = topRightLat - lowerLeftLat;
@@ -179,9 +203,11 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
             mappersData = new ArrayList<ArrayList<String>>();
             pendingRequests = parts;
             conf.resetUsedServers();
-            Address reducer = conf.getServer();
+            reducer = conf.getServer();
+            Log.d("ERROR69","reducer" + reducer.toString());
+
             if (reducer == null) {
-                // Out of addresses
+                outofAddresses();
             }
             for (int i = 0; i < parts; i++) {
                 ArrayList<String> data = new ArrayList<String>();
@@ -191,7 +217,7 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
                 data.add(trpoint[1]);
                 data.add(datetimeStart);
                 data.add(datetimeEnd);
-                data.add(conf.getReducer().toString());
+                data.add(reducer.toString());
 
                 lowerLeftLat += latStep;
                 topRightLat += latStep;
@@ -210,9 +236,13 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
                         ArrayList<String> data = getNextData();
                         while (repeat) {
                             repeat = false;
+                            Log.d("ERROR69","v2");
                             Address mapperAddress = conf.getServer();
+//                            Log.d("ERROR69", mapperAddress.toString());
                             if (mapperAddress == null){
-                                // Out of addresses
+                                Log.d("ERROR69","asss2sd");
+                                outofAddresses();
+                                break;
                             }
                             try {
                                 Message msg = new Message(clientId, Message.MessageType.MAP, data);
@@ -227,6 +257,8 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
                                 }
                                 waitForMappers(mapperAddress);
                             } catch (Exception dealWithIt) {
+                                Log.d("ERROR69","ff");
+                                dealWithIt.printStackTrace();
                                 repeat = true;
                                 conf.removeServerFromOnline(mapperAddress);
                                 messageMainThread("Lost mapper");
@@ -268,10 +300,10 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
         }
 
         private void ackToReducer(){
-            Address reducerAddr = conf.getReducer();
+            Address reducerAddr = reducer;
             System.out.println("Notifying Reducer at " + reducerAddr.getIp() + ":" + reducerAddr.getPort());
             Message message = new Message(clientId, Message.MessageType.REDUCE, new String("You can reduce!"));
-            NetworkHandler net = new NetworkHandler(conf.getReducer());
+            NetworkHandler net = new NetworkHandler(reducer);
             net.sendMessage(message);
             Message reply = net.readMessage();
             net.close();
@@ -279,7 +311,7 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
         }
 
         private void collectDataFromReducer(Map<Checkin,Set<String>> data) {
-            Address reducerAddr = conf.getReducer();
+            Address reducerAddr = reducer;
             System.out.println("Got data from Reducer at " + reducerAddr.getIp() + ":" + reducerAddr.getPort());
 
             for(Map.Entry<Checkin,Set<String>> d : data.entrySet()) {
@@ -291,7 +323,6 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
         }
 
         private void messageMainThread(String message) {
-            Log.d("Error69:", message);
             final String msg = message;
             DisplayResults.this.runOnUiThread(new Runnable() {
                 @Override
@@ -300,23 +331,9 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
                 }
             });
         }
-        private void outofAddresses(String message) {
-            Log.d("Error69:", message);
-            final String msg = message;
-            DisplayResults.this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    new AlertDialog.Builder(DisplayResults.this)
-                            .setTitle("Out Of Addresses")
-                            .setMessage("Not enough available servers, to serve your request. Check servers, settings and try again.")
-                            .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    System.exit(0);
-                                }
-                            })
-                            .show();
-                }
-            });
+        private void outofAddresses() {
+            outOfAddresses = true;
+
         }
     }
 
