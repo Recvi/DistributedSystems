@@ -40,4 +40,25 @@ public class Address {
     public String toString() {
         return this.ip + ":" + this.port;
     }
+
+	@Override
+	public boolean equals(Object address) {
+		if (this == address) {
+			return true;
+		}
+		if (address == null) {
+			return false;
+		}
+		if (getClass() != address.getClass()) {
+			return false;
+		}
+
+		Address other = (Address) address;
+		if (!this.toString().equals(other.toString())) {
+			return false;
+		}
+
+		return true;
+	}
+
 }

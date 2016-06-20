@@ -43,13 +43,16 @@ public class Config {
     public synchronized Address getServer() {
         if (freeServers.size() > 0) {
             Address address = freeServers.remove(0);
-            Log.d("ERROR69","got" + address.toString());
+            Log.d("ERROR69","I am config and i give: " + address.toString());
             return address;
         }
 
         if ((onlineServers.size() > 0) && (threadsPerServerRemaining >= 1)) {
+            Log.d("ERROR69","Will have to use servers again.");
             resetfreeServers();
-            return freeServers.remove(0);
+            Address address = freeServers.remove(0);
+            Log.d("ERROR69","I am config and i give: " + address.toString());
+            return address;
         }
         return null;
     }
@@ -79,10 +82,14 @@ public class Config {
         return mapParts;
     }
 
-    public void removeServerFromOnline(Address address) {
-        Log.d("ERROR69:", "FAILED" + address.toString());
+    public synchronized boolean removeServerFromOnline(Address address) {
+        Log.d("ERROR69:", "I am config and i and i will remove this: " + address.toString());
+        Log.d("ERROR69:", "I am config and i have onlieServer.size() =  " + onlineServers.size());
+        int before= onlineServers.size();
         onlineServers.remove(address);
-
+        int after = onlineServers.size();
+        Log.d("ERROR69:", "I am config and i have onlieServer.size() (after removal) = " + onlineServers.size());
+        return before != after;
     }
 
 }

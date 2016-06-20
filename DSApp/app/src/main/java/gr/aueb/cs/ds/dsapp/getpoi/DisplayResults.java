@@ -192,6 +192,7 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
         boolean outOfAddresses = false;
 
         private boolean distributeToMappers(String[] llpoint, String[] trpoint, String datetimeStart, String datetimeEnd, int parts) {
+            restartdistributeToMappers = false;
             Log.d("ERROR69", "I start a new distribution.");
             double lowerLeftLat = Double.parseDouble(llpoint[0]);
             double topRightLat = Double.parseDouble(trpoint[0]);
@@ -211,7 +212,7 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
                 outofAddresses();
                 return true;
             }
-            Log.d("ERROR69", "My recuer is" + reducer.toString());
+            Log.d("ERROR69", "My reducer is " + reducer.toString());
             for (int i = 0; i < parts; i++) {
                 ArrayList<String> data = new ArrayList<String>();
                 data.add(Double.toString(lowerLeftLat));
@@ -247,7 +248,7 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
                                 outofAddresses();
                                 break;
                             }
-                            Log.d("ERROR69","Got ." + mapperAddress.toString() + "as mapper address.");
+                            Log.d("ERROR69","Got :" + mapperAddress.toString() + " as mapper address.");
                             try {
                                 Message msg = new Message(clientId, Message.MessageType.MAP, data);
                                 NetworkHandler net = new NetworkHandler(mapperAddress);
@@ -255,8 +256,10 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
                                 Message reply = net.readMessage();
                                 net.close();
                                 if (reply.getMsgType() == Message.MessageType.ERROR) {
-                                    conf.removeServerFromOnline(new Address(data.get(6)));
-                                    restartdistributeToMappers = true;
+                                    Log.d("ERROR69","I a mapper and just found out reducer " + reducer.toString() + " is down.");
+                                    if (conf.removeServerFromOnline(new Address(data.get(6)))) {
+                                        restartdistributeToMappers = true;
+                                    }
                                     return;
                                 }
                                 waitForMappers(mapperAddress);
@@ -272,6 +275,7 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
                     }
                 };
                 threads[i].start();
+
             }
             for (int i = 0 ; i < parts; i++){
                 try {
@@ -312,7 +316,7 @@ public class DisplayResults extends Activity implements GoogleMap.OnInfoWindowCl
         private void collectDataFromReducer(Map<Checkin,Set<String>> data) {
             Address reducerAddr = reducer;
             System.out.println("Got data from Reducer at " + reducerAddr.getIp() + ":" + reducerAddr.getPort());
-
+            Log.d("ERROR69:", "Well, i just got data from reducer.");
             for(Map.Entry<Checkin,Set<String>> d : data.entrySet()) {
                 checkins.add(d.getKey());
                 imageSet.put(d.getKey().getPOI_name(), d.getValue());

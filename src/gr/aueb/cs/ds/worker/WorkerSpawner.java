@@ -70,8 +70,9 @@ public class WorkerSpawner {
 
 					System.out.println("Worker Spawner: Message is MAP.");
 					Address reducer = new Address(((ArrayList<String>)msg.getData()).get(6));
-					conf.setReducer(reducer);
-					Thread map = new MapWorker(net, msg, conf);
+					ConfigReader conf2 = new ConfigReader();
+					conf2.setReducer(reducer);
+					Thread map = new MapWorker(net, msg, conf2);
 					threads.add(map);
 					map.start();
 					break;
