@@ -9,12 +9,23 @@ public class Address {
     */
     private String ip;
 	private int port;
-	
+
 	public Address(String ip, int port) {
         this.ip = ip;
         this.port = port;
     }
-    
+
+    public Address(String addr) {
+        String[] add = addr.split(':');
+        if (add.length == 2) {
+            this.ip = add[0];
+            this.port = add[1];
+        } else {
+            this.ip = null;
+            this.port = null;
+        }
+    }
+
     public String getIp() {
 		return ip;
 	}
